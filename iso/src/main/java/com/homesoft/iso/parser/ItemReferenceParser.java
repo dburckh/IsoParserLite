@@ -26,9 +26,8 @@ public class ItemReferenceParser implements ContainerParser {
     }
 
     @Override
-    public SingleItemTypeReference[] parse(Box box, StreamReader streamReader, int versionFlags) throws IOException {
+    public Void parse(Box box, StreamReader streamReader, int versionFlags) throws IOException {
         final int version = Box.getVersion(versionFlags);
-        final long end = DataUtil.getBoxEnd(box, isFullBox(), streamReader);
         switch (version) {
             case 0:
                 boxParser = new SingleItemTypeReferenceParser();
@@ -37,11 +36,9 @@ public class ItemReferenceParser implements ContainerParser {
                 boxParser = new SingleItemTypeReferenceIntParser();
                 break;
             default:
-                return null;
-
+                boxParser = null;
         }
-        final Object[] objects = IsoParser.parse(this, streamReader, end);
-        return DataUtil.copyArray(objects, SingleItemTypeReference.class);
+        return null;
     }
 
     @Override

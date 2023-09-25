@@ -6,7 +6,6 @@ import androidx.annotation.Nullable;
 import com.homesoft.iso.parser.Av1DecoderConfigParser;
 import com.homesoft.iso.parser.CodecSpecificData;
 import com.homesoft.iso.parser.GenericContainerParser;
-import com.homesoft.iso.parser.FileType;
 import com.homesoft.iso.parser.FileTypeParser;
 import com.homesoft.iso.parser.HevcDecoderConfigParser;
 import com.homesoft.iso.parser.ImageSpatialExtents;
@@ -18,8 +17,6 @@ import com.homesoft.iso.parser.ItemLocationParser;
 import com.homesoft.iso.parser.ItemPropertyAssociation;
 import com.homesoft.iso.parser.ItemPropertyAssociationParser;
 import com.homesoft.iso.parser.ItemReferenceParser;
-import com.homesoft.iso.parser.NumberType;
-import com.homesoft.iso.parser.ObjectsType;
 import com.homesoft.iso.parser.PrimaryItemParser;
 import com.homesoft.iso.parser.SingleItemTypeReference;
 import com.homesoft.iso.parser.StringParser;
@@ -32,16 +29,18 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Parser for HEIF based ISOBMFF files
  * This includes HEIC (HEVC) and AVIF (AV1) image files
  */
-public class Heif {
+public class Heif /*implements ParseListener*/ {
+    private static final Object[] EMPTY_ARRAY = new Object[0];
     public static final ContainerParser ROOT_PARSER = new GenericContainerParser()
             .addParser(new FileTypeParser())
             .addParser(BoxTypes.TYPE_meta, new GenericContainerParser(true, false)
-                    .addParser(new PrimaryItemParser())
+                    .addParser(BoxTypes.TYPE_pitm, new PrimaryItemParser())
                     .addParser(BoxTypes.TYPE_iinf, new ItemInfoParser())
                     .addParser(new ItemLocationParser())
                     .addParser(BoxTypes.TYPE_iref, new ItemReferenceParser())
@@ -66,108 +65,56 @@ public class Heif {
         }
     }
 
-    /**
-     * Parse a HEIF File using the default HEIF BoxParsers
-     */
     public static Heif parse(File file) throws Exception {
         try (final StreamReader streamReader = IsoParser.newStreamReader(file)) {
             return parse(streamReader);
         }
     }
-
     /**
-     * Parse a HEIF StreamReader using the default HEIF BoxParsers
+     * Parse a HEIF File using the default HEIF BoxParsers
      */
-    public static Heif parse(StreamReader streamReader) throws IOException {
-        Object[] objects = IsoParser.parse(ROOT_PARSER, streamReader);
-        return new Heif(objects);
+    public static Heif parse(final StreamReader streamReader) throws Exception {
+        final TypeListener typeListener = new TypeListener();
+        typeListener.addTypeListeners(BoxTypes.TYPE_pitm, BoxTypes.TYPE_iinf, BoxTypes.TYPE_ipma, BoxTypes.TYPE_iloc,  BoxTypes.TYPE_iref, BoxTypes.TYPE_ipco );
+        IsoParser.parse(ROOT_PARSER, streamReader, typeListener);
+        return new Heif(typeListener);
     }
 
+    private final int primaryItemId;
     @NonNull
-    private final Integer primaryItem;
-
-    private final FileType fileType;
     private final ItemInfoEntry[] itemInfoEntries;
-    private final ItemPropertyAssociation itemPropertyAssociation;
+    @NonNull
+    private final ItemPropertyAssociation[] itemPropertyAssociations;
+    @NonNull
     private final Object[] propertyArray;
 
-    private final SingleItemTypeReference[] references;
+    @NonNull
+    private final SingleItemTypeReference[] itemReferences;
 
+    @NonNull
     private final ItemLocation[] itemLocations;
 
     /**
-     * Private constructor that takes the output of the IsoParser
-     * and turns it into user friendly objects
-     * @param objects data from the IsoParser
+     * Private constructor validates the output of parse
      */
-    private Heif(final Object[] objects) {
-        fileType = DataUtil.findClass(FileType.class, objects);
-        final ObjectsType metaObjects = (ObjectsType) DataUtil.findType(BoxTypes.TYPE_meta, objects);
-        NumberType primaryItem = null;
-        ItemLocation[] itemLocations = new ItemLocation[0];
-        ItemInfoEntry[] itemInfoEntries = new ItemInfoEntry[0];
-        SingleItemTypeReference[] references = new SingleItemTypeReference[0];
-        ObjectsType itemPropertyObjectsType = null;
-
-        if (metaObjects != null) {
-            for (Object object : metaObjects.objects) {
-                if (object instanceof Type) {
-                    switch (((Type) object).getType()) {
-                        case BoxTypes.TYPE_pitm:
-                            primaryItem = (NumberType) object;
-                            break;
-                        case BoxTypes.TYPE_irpr:
-                            itemPropertyObjectsType = (ObjectsType) object;
-                            break;
-                    }
-                    if (((Type) object).getType() == BoxTypes.TYPE_pitm) {
-                        primaryItem = (NumberType) object;
-                    }
-                } else {
-                    final Class<?> c = object.getClass();
-                    if (c == ItemLocation[].class) {
-                        itemLocations = (ItemLocation[]) object;
-                    } else if (c == ItemInfoEntry[].class) {
-                        itemInfoEntries = (ItemInfoEntry[]) object;
-                    } else if (c == SingleItemTypeReference[].class) {
-                        references = (SingleItemTypeReference[]) object;
-                    }
-                }
-            }
-        }
-        this.itemInfoEntries = itemInfoEntries;
-        this.references = references;
-        this.itemLocations = itemLocations;
-        if (primaryItem == null) {
-            throw new NullPointerException("Expected Primary Item");
-        }
-        this.primaryItem = primaryItem.number.intValue();
-
-        ObjectsType propertyObjectsType = null;
-        ItemPropertyAssociation itemPropertyAssociation = null;
-        if (itemPropertyObjectsType != null) {
-            for (Object object : itemPropertyObjectsType.objects) {
-                if (object instanceof Type) {
-                    if (((Type) object).getType() == BoxTypes.TYPE_ipco) {
-                        propertyObjectsType = (ObjectsType) object;
-                    }
-                } else if (object instanceof ItemPropertyAssociation) {
-                    itemPropertyAssociation = (ItemPropertyAssociation) object;
-                }
-            }
-        }
-        propertyArray = propertyObjectsType == null ? IsoParser.OBJECT_ARRAY : propertyObjectsType.objects;
-        if (itemPropertyAssociation == null) {
-            throw new NullPointerException("Item Properties Associations Required");
-        }
-        this.itemPropertyAssociation = itemPropertyAssociation;
-
+    private Heif(final TypeListener typeListener) {
+        primaryItemId = (Integer)typeListener.getType(BoxTypes.TYPE_pitm);
+        itemInfoEntries = DataUtil.toArray(typeListener.getType(BoxTypes.TYPE_iinf), ItemInfoEntry.class);
+        itemPropertyAssociations = (ItemPropertyAssociation[])Objects.requireNonNull(typeListener.getType(BoxTypes.TYPE_ipma));
+        propertyArray = DataUtil.toArray(typeListener.getType(BoxTypes.TYPE_ipco), Object.class);
+        final Object temp = typeListener.getType(BoxTypes.TYPE_iref);
+        itemReferences = temp == null ? new SingleItemTypeReference[0] : DataUtil.toArray(temp, SingleItemTypeReference.class);
+        itemLocations = (ItemLocation[]) Objects.requireNonNull(typeListener.getType(BoxTypes.TYPE_iloc));
     }
 
     private Object[] getProperties(int id) {
-        final int[] propertyIds = itemPropertyAssociation.getAssociations(id);
+        final ItemPropertyAssociation itemPropertyAssociation = DataUtil.findId(id, itemPropertyAssociations);
+        if (itemPropertyAssociation == null) {
+            return EMPTY_ARRAY;
+        }
+        final int[] propertyIds = itemPropertyAssociation.getAssociations();
         if (propertyIds.length == 0 || propertyIds[0] == 0) {
-            return TypedWrapper.EMPTY_ARRAY;
+            return EMPTY_ARRAY;
         }
         final Object[] properties = new Object[propertyIds.length];
         for (int i=0;i<properties.length;i++) {
@@ -202,8 +149,8 @@ public class Heif {
     }
 
     @NonNull
-    public Item getPrimaryItem() throws InvalidObjectException {
-        final ItemInfoEntry itemInfoEntry = DataUtil.findId(primaryItem, itemInfoEntries);
+    public Item getPrimaryItemId() throws InvalidObjectException {
+        final ItemInfoEntry itemInfoEntry = DataUtil.findId(primaryItemId, itemInfoEntries);
         if (itemInfoEntry == null) {
             throw new InvalidObjectException("Primary Item Info not found in ItemInfoEntries");
         }
@@ -228,7 +175,7 @@ public class Heif {
     private Grid getGrid(final ItemInfoEntry itemInfoEntry) {
         final Object[] properties = getProperties(itemInfoEntry.id);
         List<Image> imageList = Collections.emptyList();
-        for (SingleItemTypeReference reference : references) {
+        for (SingleItemTypeReference reference : itemReferences) {
             if (reference.type == ItemReferenceParser.TYPE_DIMG && reference.fromId == itemInfoEntry.id) {
                 final int[] imageIds = reference.getToIds();
                 imageList = new ArrayList<>(imageIds.length);

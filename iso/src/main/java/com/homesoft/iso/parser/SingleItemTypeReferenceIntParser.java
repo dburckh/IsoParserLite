@@ -2,7 +2,6 @@ package com.homesoft.iso.parser;
 
 import com.homesoft.iso.Box;
 import com.homesoft.iso.BoxParser;
-import com.homesoft.iso.DataUtil;
 import com.homesoft.iso.StreamReader;
 
 import java.io.IOException;
@@ -16,9 +15,9 @@ public class SingleItemTypeReferenceIntParser implements BoxParser {
 
     @Override
     public SingleItemTypeReference parse(Box box, StreamReader streamReader, int versionFlags) throws IOException {
-        final int fromId = DataUtil.getUShort(streamReader);
+        final int fromId = streamReader.getInt();
         final int referenceCount = streamReader.getInt();
         final ByteBuffer byteBuffer = ByteBuffer.wrap(streamReader.getBytes(4 * referenceCount));
-        return new SingleItemTypeReference(box.type, fromId, byteBuffer.asShortBuffer());
+        return new SingleItemTypeReference(box.type, fromId, byteBuffer.asIntBuffer());
     }
 }

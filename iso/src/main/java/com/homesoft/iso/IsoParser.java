@@ -10,13 +10,17 @@ import java.util.ArrayList;
 public class IsoParser {
     public static final Object[] OBJECT_ARRAY = new Object[0];
 
-    public static Object[] parse(ContainerParser containerParser, StreamReader streamReader) throws IOException {
+    public static void parse(ContainerParser containerParser,
+                                 StreamReader streamReader,
+                                 ParseListener parseListener) throws IOException {
         final long end = (streamReader instanceof RandomStreamReader) ? ((RandomStreamReader) streamReader).size() : Long.MAX_VALUE;
-        return parse(containerParser, streamReader, end);
+        parse(containerParser, streamReader, parseListener, end);
     }
 
-    public static Object[] parse(ContainerParser containerParser, StreamReader streamReader, long end) throws IOException {
-        final ArrayList<Object> list = new ArrayList<>();
+    public static void parse(ContainerParser containerParser,
+                                 StreamReader streamReader,
+                                 ParseListener parseListener,
+                                 long end) throws IOException {
         long start = streamReader.position();
             while (start < end) {
                 final Box box;
@@ -29,7 +33,13 @@ public class IsoParser {
                 final BoxParser boxParser = containerParser.getParser(box.type);
                 if (boxParser != null) {
                     final Object result = boxParser.parse(box, streamReader, boxParser.isFullBox() ? streamReader.getInt() :  0);
-                    list.add(result);
+                    if (boxParser instanceof ContainerParser) {
+                        parseListener.onContainerStart(box, result);
+                        parse((ContainerParser) boxParser, streamReader, parseListener, start + box.getSize());
+                        parseListener.onContainerEnd(box);
+                    } else {
+                        parseListener.onParsed(box, result);
+                    }
                 }
                 if (box.getSize() == Box.SIZE_EOF) {
                     break;
@@ -41,7 +51,6 @@ public class IsoParser {
                     streamReader.skip(start - streamReader.position());
                 }
             }
-        return list.toArray(OBJECT_ARRAY);
 
     }
 

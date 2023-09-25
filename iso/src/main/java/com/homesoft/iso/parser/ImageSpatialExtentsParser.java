@@ -1,10 +1,10 @@
 package com.homesoft.iso.parser;
 
 import com.homesoft.iso.Box;
-import com.homesoft.iso.BoxParser;
 import com.homesoft.iso.BoxTypes;
 import com.homesoft.iso.DataUtil;
 import com.homesoft.iso.StreamReader;
+import com.homesoft.iso.TypedBoxParser;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

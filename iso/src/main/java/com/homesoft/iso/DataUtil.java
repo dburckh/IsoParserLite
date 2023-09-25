@@ -5,10 +5,11 @@ import androidx.annotation.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 public class DataUtil {
@@ -74,54 +75,6 @@ public class DataUtil {
         return byteBuffer;
     }
 
-    public static ByteBuffer requireByteBuffer(long lSize, StreamReader streamReader) throws IOException {
-        final int size = toUInt(lSize);
-        final ByteBuffer byteBuffer = streamReader.getSharedBuffer(size);
-        if (byteBuffer.remaining() < size) {
-            throw new BufferOverflowException();
-        }
-        return byteBuffer;
-    }
-
-    /**
-     * Assumes the stream is positioned after the end of the box header
-     * @param box
-     * @param fullBox
-     * @param streamReader
-     * @return
-     * @throws IOException
-     */
-    public static long getBoxEnd(Box box, boolean fullBox, StreamReader streamReader) throws IOException {
-        if (box.getSize() == Box.SIZE_EOF) {
-            if (streamReader instanceof RandomStreamReader) {
-                return ((RandomStreamReader)streamReader).size();
-            }
-        }
-        return streamReader.position() + box.getPayloadSize(fullBox);
-    }
-
-    @Nullable
-    public static <T> T getTypedWrapperData(@Nullable final Type type, T defaultValue) {
-        if (type instanceof TypedWrapper) {
-            final TypedWrapper typedWrapper = (TypedWrapper) type;
-            if (defaultValue.getClass().isAssignableFrom(typedWrapper.data.getClass())) {
-                return (T) typedWrapper.data;
-            }
-        }
-        return defaultValue;
-    }
-
-    @NonNull
-    public static <T extends Type> List<T> findTypeList(int findType, T[] types) {
-        final ArrayList<T> list = new ArrayList<>();
-        for (T t : types) {
-            if (t.getType() == findType) {
-                list.add(t);
-            }
-        }
-        return list;
-    }
-
     /**
      *
      * @param type type searching for
@@ -176,6 +129,24 @@ public class DataUtil {
     }
 
     /**
+     * Blindly attempt to convert an Object to an array of T.
+     * The Collection must contain items assignable to T
+     * @param object Must contain an {@link java.util.Collection} of T
+     * @param c the contents of the collection
+     * @return An array of type T
+     * @param <T>
+     */
+    public static <T> T[] toArray(Object object, Class<T> c) throws ClassCastException{
+        Collection<T> collection = (Collection) object;
+        T[] array = (T[])Array.newInstance(c, collection.size());
+        final Iterator<T> it = collection.iterator();
+        for (int i=0;it.hasNext();i++) {
+            array[i] = it.next();
+        }
+        return array;
+    }
+
+    /**
      * Do a recursive search for a given type
      * @param typeArray and array of types than may have a sub
      * @param path
@@ -204,19 +175,5 @@ public class DataUtil {
             i++;
         }
         return null;
-    }
-
-    /**
-     * Copy a generic array of Type to a specific subclass of Type
-     */
-    public static <T> T[] copyArray(Object[] objects, Class<T> clazz) {
-        final T[] specificArray = (T[])Array.newInstance(clazz, objects.length);
-        for (int i=0;i<objects.length;i++) {
-            final Object object = objects[i];
-            if (clazz.equals(object.getClass())) {
-                specificArray[i] = (T)object;
-            }
-        }
-        return specificArray;
     }
 }

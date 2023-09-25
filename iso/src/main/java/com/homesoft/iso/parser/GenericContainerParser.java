@@ -6,9 +6,8 @@ import androidx.annotation.Nullable;
 import com.homesoft.iso.Box;
 import com.homesoft.iso.BoxParser;
 import com.homesoft.iso.ContainerParser;
-import com.homesoft.iso.DataUtil;
-import com.homesoft.iso.IsoParser;
 import com.homesoft.iso.StreamReader;
+import com.homesoft.iso.TypedBoxParser;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -48,9 +47,8 @@ public class GenericContainerParser implements ContainerParser {
     }
     @NonNull
     @Override
-    public ObjectsType parse(Box box, StreamReader streamReader, int versionFlags) throws IOException {
-        final Object[] objects = IsoParser.parse(this, streamReader, DataUtil.getBoxEnd(box, isFullBox(), streamReader));
-        return new ObjectsType(box.type, objects);
+    public Void parse(Box box, StreamReader streamReader, int versionFlags) throws IOException {
+        return null;
     }
 
     @Nullable

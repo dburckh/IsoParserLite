@@ -1,38 +1,40 @@
 package com.homesoft.iso.parser;
 
-import androidx.annotation.NonNull;
+import com.homesoft.iso.Id;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
-import java.util.HashMap;
+import java.util.Arrays;
 
-public class ItemPropertyAssociation {
-    private static final int[] EMPTY_ARRAY = new int[0];
-    private final HashMap<Integer, Buffer> map = new HashMap<>();
+public class ItemPropertyAssociation implements Id {
 
-    public int[] getAssociations(int id) {
-        final Buffer associationBuffer = map.get(id);
-        if (associationBuffer == null) {
-            return EMPTY_ARRAY;
-        }
-        final int[] associations = new int[associationBuffer.capacity()];
+    private final int id;
+    private final Buffer buffer;
+
+    public ItemPropertyAssociation(int id, Buffer buffer) {
+        this.id = id;
+        this.buffer = buffer;
+    }
+
+    @Override
+    public int getId() {
+        return id;
+    }
+
+    public int[] getAssociations() {
+        final int[] associations = new int[buffer.capacity()];
         for (int i=0;i<associations.length;i++) {
-            if (associationBuffer instanceof ByteBuffer) {
-                associations[i] = ((ByteBuffer)associationBuffer).get(i) & 0x7f;
-            } else if (associationBuffer instanceof ShortBuffer) {
-                associations[i] = ((ShortBuffer)associationBuffer).get(i) & 0x7fff;
+            if (buffer instanceof ByteBuffer) {
+                associations[i] = ((ByteBuffer)buffer).get(i) & 0x7f;
+            } else if (buffer instanceof ShortBuffer) {
+                associations[i] = ((ShortBuffer)buffer).get(i) & 0x7fff;
             }
         }
         return associations;
     }
-
-    void put(int id, @NonNull Buffer associationBuffer) {
-        map.put(id, associationBuffer);
-    }
-
     @Override
     public String toString() {
-        return getClass().getSimpleName() +"{map=" +map +"}";
+        return getClass().getSimpleName() +"{id=" +id + ", associations=" + Arrays.toString(getAssociations()) + "}";
     }
 }
