@@ -1,12 +1,15 @@
 package com.homesoft.iso;
 
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TypeListener extends ContainerListener {
+public class TypeListener implements ParseListener {
     private final HashMap<Integer, Object> typeMap = new HashMap<>();
+    private final ArrayDeque<Integer> stack = new ArrayDeque<>();
+
     private ArrayList<Object> currentContainer;
 
     public void addTypeListeners(int ... types) {
@@ -19,16 +22,14 @@ public class TypeListener extends ContainerListener {
         return typeMap.get(type);
     }
 
-    @Override
     public void clear() {
-        super.clear();
         for (Map.Entry<Integer, Object> entry : typeMap.entrySet()) {
             entry.setValue(null);
         }
     }
 
     private void updateCurrentContainer() {
-        final Object o = typeMap.get(getTopContainer().getType());
+        final Object o = typeMap.get(stack.peek());
         if (o instanceof ArrayList) {
             currentContainer = (ArrayList<Object>) o;
         } else {
@@ -41,7 +42,7 @@ public class TypeListener extends ContainerListener {
         if (typeMap.containsKey(box.type)) {
             typeMap.put(box.type, new ArrayList<>());
         }
-        super.onContainerStart(box, result);
+        stack.push(box.type);
         updateCurrentContainer();
     }
 
@@ -59,7 +60,7 @@ public class TypeListener extends ContainerListener {
 
     @Override
     public void onContainerEnd(Box box) {
-        super.onContainerEnd(box);
+        stack.pop();
         updateCurrentContainer();
     }
 }

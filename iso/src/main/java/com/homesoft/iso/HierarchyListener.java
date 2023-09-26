@@ -1,8 +1,7 @@
 package com.homesoft.iso;
 
-import androidx.annotation.NonNull;
-
 import java.util.ArrayDeque;
+import java.util.Objects;
 
 /**
  * {@link ParseListener} that records the results in a hierarchy
@@ -10,13 +9,18 @@ import java.util.ArrayDeque;
  * Items that are {@link Type} will be stored as is.
  * Other items will be wrapped in a {@link TypedResult}
  */
-public class HierarchyListener extends ContainerListener {
+public class HierarchyListener implements ParseListener {
+    private final ArrayDeque<TypedList<Type>> stack = new ArrayDeque<>();
+
+    public HierarchyListener() {
+        stack.push(new TypedList<>(0));
+    }
 
     @Override
     public void onContainerStart(Box box, Object result) {
-        final TypedList<Type> parentContainer = getTopContainer();
-        super.onContainerStart(box, result);
-        parentContainer.add(getTopContainer());
+        final TypedList<Type> parentList = Objects.requireNonNull(stack.peek());
+        final TypedList<Type> childList = new TypedList<>(box.type);
+        parentList.add(childList);
     }
 
     @Override
@@ -24,7 +28,7 @@ public class HierarchyListener extends ContainerListener {
         if (result == null) {
             return;
         }
-        final TypedList<Type> typedList = getTopContainer();
+        final TypedList<Type> typedList = Objects.requireNonNull(stack.peek());
         final Type type;
         if (result instanceof Type) {
             type = (Type) result;
@@ -33,7 +37,9 @@ public class HierarchyListener extends ContainerListener {
         }
         typedList.list.add(type);
     }
-//    public String toString() {
-//        return rootList.toString();
-//    }
+
+    @Override
+    public void onContainerEnd(Box box) {
+        stack.pop();
+    }
 }
