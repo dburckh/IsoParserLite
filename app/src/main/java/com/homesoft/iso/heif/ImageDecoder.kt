@@ -9,8 +9,9 @@ import android.os.Handler
 import android.view.PixelCopy
 import com.homesoft.iso.Heif.Image
 import com.homesoft.iso.RandomStreamReader
-import com.homesoft.iso.parser.ItemInfoEntry
-import java.lang.IllegalArgumentException
+import com.homesoft.iso.box.CodecSpecificData
+import com.homesoft.iso.box.HevcDecoderConfig
+import com.homesoft.iso.box.ItemInfoEntry
 import java.nio.ByteBuffer
 import java.util.Collections
 
@@ -29,23 +30,50 @@ class ImageDecoder(image: Image):AutoCloseable, VideoDecoder.DataSource,
     private var reader: RandomStreamReader? = null
     private var processing = 0
     init {
-        val mimeType = when (image.type) {
-            ItemInfoEntry.ITEM_TYPE_hvc1 -> MediaFormat.MIMETYPE_VIDEO_HEVC
-            ItemInfoEntry.ITEM_TYPE_av01 -> MediaFormat.MIMETYPE_VIDEO_AV1
+        val codecSpecificData = image.codecSpecificData
+        val csdList = codecSpecificData.codecSpecificData
+        if (csdList.isEmpty()) {
+            throw IllegalArgumentException("CodeSpecificData empty")
+        }
+        val mimeType:String
+        val csd0: ByteBuffer
+        when (image.type) {
+            ItemInfoEntry.ITEM_TYPE_hvc1 -> {
+                mimeType = MediaFormat.MIMETYPE_VIDEO_HEVC
+                val vps = CodecSpecificData.Data.findType(HevcDecoderConfig.TYPE_VPS, csdList)
+                val vpsSize = vps?.capacity() ?: throw IllegalArgumentException("VPS Required")
+                val sps = CodecSpecificData.Data.findType(HevcDecoderConfig.TYPE_SPS, csdList)
+                val spsSize = sps?.capacity() ?: throw IllegalArgumentException("SPS Required")
+                val pps = CodecSpecificData.Data.findType(HevcDecoderConfig.TYPE_PPS, csdList)
+                val ppsSize = pps?.capacity() ?: throw IllegalArgumentException("PPS Required")
+                csd0 = ByteBuffer.allocateDirect(vpsSize + spsSize + ppsSize + 12)
+                csd0.putInt(1)
+                csd0.put(vps)
+                csd0.putInt(1)
+                csd0.put(sps)
+                csd0.putInt(1)
+                csd0.put(pps)
+                csd0.clear()
+            }
+            ItemInfoEntry.ITEM_TYPE_av01 -> {
+                mimeType = MediaFormat.MIMETYPE_VIDEO_AV1
+                // Codec tries to access bytes directly, which blows up on RO ByteBuffer
+                val csd0ro = csdList[0].byteBuffer
+                csd0 = ByteBuffer.allocateDirect(csd0ro.capacity())
+                csd0.put(csd0ro)
+            }
             else -> throw IllegalArgumentException("Unknown type")
         }
         val spatialExtents = image.imageSpatialExtents
-        val codecConfig = image.codecSpecificData
         val itemLocation = image.itemLocation
 
-        if (spatialExtents == null || codecConfig == null ||
-            itemLocation == null || itemLocation.extentCount == 0) {
+        if (spatialExtents == null || itemLocation == null || itemLocation.extentCount == 0) {
             throw IllegalArgumentException("Missing Required Data")
         }
         width = spatialExtents.width
         height = spatialExtents.height
         imageReader = ImageReader.newInstance(width, height, ImageFormat.PRIVATE, IMAGE_READER_SIZE)
-        videoDecoder = VideoDecoder(mimeType, width, height, codecConfig)
+        videoDecoder = VideoDecoder(mimeType, width, height, csd0)
     }
 
     fun decode(list:List<Image>, reader: RandomStreamReader,

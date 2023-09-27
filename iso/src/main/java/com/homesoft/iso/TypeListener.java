@@ -9,8 +9,19 @@ import java.util.Map;
 public class TypeListener implements ParseListener {
     private final HashMap<Integer, Object> typeMap = new HashMap<>();
     private final ArrayDeque<Integer> stack = new ArrayDeque<>();
+    private final int cancelType;
 
+    private boolean cancelled = false;
     private ArrayList<Object> currentContainer;
+
+    /**
+     * Default constructor
+     * @param cancelType cause parsing to stop after a {@link ContainerBox} of this type
+     *                   has been encountered or {@link BoxTypes#TYPE_NA}
+     */
+    public TypeListener(int cancelType) {
+        this.cancelType = cancelType;
+    }
 
     public void addTypeListeners(int ... types) {
         for (int type : types) {
@@ -38,19 +49,19 @@ public class TypeListener implements ParseListener {
     }
 
     @Override
-    public void onContainerStart(Box box, Object result) {
-        if (typeMap.containsKey(box.type)) {
-            typeMap.put(box.type, new ArrayList<>());
+    public void onContainerStart(BoxHeader boxHeader, Object result) {
+        if (typeMap.containsKey(boxHeader.type)) {
+            typeMap.put(boxHeader.type, new ArrayList<>());
         }
-        stack.push(box.type);
+        stack.push(boxHeader.type);
         updateCurrentContainer();
     }
 
     @Override
-    public void onParsed(Box box, Object result) {
+    public void onParsed(BoxHeader boxHeader, Object result) {
         if (result != null) {
-            if (typeMap.containsKey(box.type)) {
-                typeMap.put(box.type, result);
+            if (typeMap.containsKey(boxHeader.type)) {
+                typeMap.put(boxHeader.type, result);
             }
             if (currentContainer != null) {
                 currentContainer.add(result);
@@ -59,8 +70,16 @@ public class TypeListener implements ParseListener {
     }
 
     @Override
-    public void onContainerEnd(Box box) {
+    public void onContainerEnd(BoxHeader boxHeader) {
         stack.pop();
         updateCurrentContainer();
+        if (boxHeader.type == cancelType) {
+            cancelled = true;
+        }
+    }
+
+    @Override
+    public boolean isCancelled() {
+        return cancelled;
     }
 }

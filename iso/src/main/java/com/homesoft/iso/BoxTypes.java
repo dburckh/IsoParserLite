@@ -1,7 +1,20 @@
 package com.homesoft.iso;
 
 public interface BoxTypes {
+    int TYPE_NA = 0; // Not applicable tag (null).
     int TYPE_ftyp = 0x66747970; //ftyp
+
+    int TYPE_moov = 0x6D6F6F76; //moov - Movie
+    int TYPE_mvhd = 0x6D766864; //moov->mvhd - Movie Header
+    int TYPE_trak = 0x7472616B; //moov->trak - Track
+    int TYPE_tkhd = 0x746B6864; //moov->trak->tkhd - Track Header
+    int TYPE_mdia = 0x6D646961; //moov->trak->mdia - Media
+    int TYPE_mdhd = 0x6D646864; //moov->trak->mdia->mdhd - Media Header
+    int TYPE_hdlr = 0x68646C72; //moov->trak->mdia->hdlr - Handler
+    int TYPE_minf = 0x6D696E66; //moov->trak->mdia->minf - Media Information
+    int TYPE_stbl = 0x7374626C; //moov->trak->mdia->minf->stbl - Sample Table Box
+    int TYPE_stsd = 0x73747364; //moov->trak->mdia->minf->stbl->stsd - Sample Descriptions
+    int TYPE_hvc1 = 0x68766331; //moov->trak->mdia->minf->stbl->stsd->hvc1 - HEVC description
     int TYPE_uuid = 0x75756964; //uuid
 
     int TYPE_meta = 0x6D657461; //meta

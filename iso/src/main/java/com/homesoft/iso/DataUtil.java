@@ -7,15 +7,13 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 public class DataUtil {
-    public static final long UINT_MASK = 0xffffffffL;
+    private static final long UINT_MASK = 0xffffffffL;
     public static final int USHORT_MASK = 0xffff;
-    public static final int UBYTE_MASK = 0xff;
+    private static final int UBYTE_MASK = 0xff;
     public static int getInt(ByteBuffer byteBuffer, int size) {
         switch (size) {
             case 2:
@@ -29,20 +27,28 @@ public class DataUtil {
         }
     }
 
+    public static long getUInt(int i) {
+        return i & UINT_MASK;
+    }
+
     public static long getUInt(ByteBuffer byteBuffer) {
-        return byteBuffer.getInt() & UINT_MASK;
-    }
-
-    public static int getUShort(ByteBuffer byteBuffer) {
-        return byteBuffer.getShort() & USHORT_MASK;
-    }
-
-    public static int getUShort(StreamReader streamReader) throws IOException {
-        return streamReader.getShort() & USHORT_MASK;
+        return getUInt(byteBuffer.getInt());
     }
 
     public static long getUInt(StreamReader streamReader) throws IOException {
-        return streamReader.getInt() & UINT_MASK;
+        return getUInt(streamReader.getInt());
+    }
+
+    public static int getUShort(short s) {
+        return s & USHORT_MASK;
+    }
+
+    public static int getUShort(ByteBuffer byteBuffer) {
+        return getUShort(byteBuffer.getShort());
+    }
+
+    public static int getUShort(StreamReader streamReader) throws IOException {
+        return getUShort(streamReader.getShort());
     }
 
     /**
@@ -66,7 +72,12 @@ public class DataUtil {
     public static ByteBuffer getByteBuffer(long lSize, StreamReader streamReader) throws IOException {
         return streamReader.getSharedBuffer(toUInt(lSize));
     }
-
+    public static ByteBuffer requireSharedBuffer(long size, StreamReader streamReader) throws IOException, BufferUnderflowException {
+        if (size > streamReader.getMaxBufferSize()) {
+            throw new BufferUnderflowException();
+        }
+        return requireSharedBuffer((int) size, streamReader);
+    }
     public static ByteBuffer requireSharedBuffer(int size, StreamReader streamReader) throws IOException, BufferUnderflowException {
         final ByteBuffer byteBuffer = streamReader.getSharedBuffer(size);
         if (byteBuffer.remaining() < size) {
@@ -144,36 +155,5 @@ public class DataUtil {
             array[i] = it.next();
         }
         return array;
-    }
-
-    /**
-     * Do a recursive search for a given type
-     * @param typeArray and array of types than may have a sub
-     * @param path
-     * @return
-     */
-    @Nullable
-    public static Type getType(Type[] typeArray, int ... path) {
-        int i=0;
-        Type type;
-        while (i<path.length) {
-            final int t = path[i];
-            type = findType(t, typeArray);
-            if (type == null) {
-                break;
-            }
-            if (type instanceof TypedWrapper) {
-                final TypedWrapper typedWrapper = (TypedWrapper)type;
-                if (typedWrapper.data instanceof Type[]) {
-                    typeArray = (Type[]) typedWrapper.data;
-                } else {
-                    break;
-                }
-            } else {
-                break;
-            }
-            i++;
-        }
-        return null;
     }
 }

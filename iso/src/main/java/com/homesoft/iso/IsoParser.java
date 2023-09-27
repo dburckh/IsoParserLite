@@ -5,46 +5,45 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.BufferUnderflowException;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
 
 public class IsoParser {
     public static final Object[] OBJECT_ARRAY = new Object[0];
 
-    public static void parse(ContainerParser containerParser,
-                                 StreamReader streamReader,
-                                 ParseListener parseListener) throws IOException {
+    public static void parse(ContainerBox containerBox,
+                             StreamReader streamReader,
+                             ParseListener parseListener) throws IOException {
         final long end = (streamReader instanceof RandomStreamReader) ? ((RandomStreamReader) streamReader).size() : Long.MAX_VALUE;
-        parse(containerParser, streamReader, parseListener, end);
+        parse(containerBox, streamReader, parseListener, end);
     }
 
-    public static void parse(ContainerParser containerParser,
-                                 StreamReader streamReader,
-                                 ParseListener parseListener,
-                                 long end) throws IOException {
+    public static void parse(ContainerBox containerBox,
+                             StreamReader streamReader,
+                             ParseListener parseListener,
+                             long end) throws IOException {
         long start = streamReader.position();
             while (start < end) {
-                final Box box;
+                final BoxHeader boxHeader;
                 try {
-                    box = Box.readBox(streamReader);
+                    boxHeader = BoxHeader.readBox(streamReader);
                 } catch (BufferUnderflowException e) {
                     // This happens when we hit the end of a true stream
                     break;
                 }
-                final BoxParser boxParser = containerParser.getParser(box.type);
-                if (boxParser != null) {
-                    final Object result = boxParser.parse(box, streamReader, boxParser.isFullBox() ? streamReader.getInt() :  0);
-                    if (boxParser instanceof ContainerParser) {
-                        parseListener.onContainerStart(box, result);
-                        parse((ContainerParser) boxParser, streamReader, parseListener, start + box.getSize());
-                        parseListener.onContainerEnd(box);
+                final Box box = containerBox.getParser(boxHeader.type);
+                if (box != null) {
+                    final Object result = box.read(boxHeader, streamReader, box.isFullBox() ? streamReader.getInt() :  0);
+                    if (box instanceof ContainerBox) {
+                        parseListener.onContainerStart(boxHeader, result);
+                        parse((ContainerBox) box, streamReader, parseListener, start + boxHeader.getSize());
+                        parseListener.onContainerEnd(boxHeader);
                     } else {
-                        parseListener.onParsed(box, result);
+                        parseListener.onParsed(boxHeader, result);
                     }
                 }
-                if (box.getSize() == Box.SIZE_EOF) {
+                if (boxHeader.getSize() == BoxHeader.SIZE_EOF) {
                     break;
                 }
-                start += box.getSize();
+                start += boxHeader.getSize();
                 if (streamReader instanceof RandomStreamReader) {
                     ((RandomStreamReader)streamReader).position(start);
                 } else {

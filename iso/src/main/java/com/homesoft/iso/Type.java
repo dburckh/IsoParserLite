@@ -2,8 +2,8 @@ package com.homesoft.iso;
 
 /**
  * Object has an ISOBMFF type
+ * @see BoxHeader
  * @see Box
- * @see BoxParser
  */
 public interface Type {
     int getType();

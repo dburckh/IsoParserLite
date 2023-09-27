@@ -10,7 +10,7 @@ import java.nio.ByteBuffer
 import java.util.BitSet
 
 class VideoDecoder(private val mimeType:String, private val width:Int, private val height:Int,
-                   private val codecConfig: ByteBuffer):
+                   private val csd0 : ByteBuffer):
     MediaCodec.Callback(), AutoCloseable {
     private val mediaCodec = MediaCodec.createDecoderByType(mimeType)
     private val mediaFormat: MediaFormat = MediaFormat.createVideoFormat(mimeType, width, height)
@@ -19,14 +19,14 @@ class VideoDecoder(private val mimeType:String, private val width:Int, private v
     private var dataSource: DataSource? = null
 
     init {
-        mediaFormat.setByteBuffer("csd-0", codecConfig)
+        mediaFormat.setByteBuffer("csd-0", csd0)
         //mediaFormat.setInteger(MediaFormat.KEY_PRIORITY, 0)
     }
 
-    fun isSupported(mimeType:String, width:Int, height:Int, codecConfig: ByteBuffer):Boolean {
+    fun isSupported(mimeType:String, width:Int, height:Int, csd0: ByteBuffer):Boolean {
         return this.mimeType == mimeType &&
                 this.width == width && this.height == height &&
-                this.codecConfig == codecConfig
+                this.csd0 == csd0
     }
 
     fun start(surface: Surface, dataSource: DataSource, handler:Handler) {

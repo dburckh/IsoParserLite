@@ -3,23 +3,23 @@ package com.homesoft.iso;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.homesoft.iso.parser.Av1DecoderConfigParser;
-import com.homesoft.iso.parser.CodecSpecificData;
-import com.homesoft.iso.parser.GenericContainerParser;
-import com.homesoft.iso.parser.FileTypeParser;
-import com.homesoft.iso.parser.HevcDecoderConfigParser;
-import com.homesoft.iso.parser.ImageSpatialExtents;
-import com.homesoft.iso.parser.ImageSpatialExtentsParser;
-import com.homesoft.iso.parser.ItemInfoEntry;
-import com.homesoft.iso.parser.ItemInfoParser;
-import com.homesoft.iso.parser.ItemLocation;
-import com.homesoft.iso.parser.ItemLocationParser;
-import com.homesoft.iso.parser.ItemPropertyAssociation;
-import com.homesoft.iso.parser.ItemPropertyAssociationParser;
-import com.homesoft.iso.parser.ItemReferenceParser;
-import com.homesoft.iso.parser.PrimaryItemParser;
-import com.homesoft.iso.parser.SingleItemTypeReference;
-import com.homesoft.iso.parser.StringParser;
+import com.homesoft.iso.box.Av1DecoderConfigBox;
+import com.homesoft.iso.box.CodecSpecificData;
+import com.homesoft.iso.box.BaseContainerBox;
+import com.homesoft.iso.box.FileTypeBox;
+import com.homesoft.iso.box.HevcDecoderConfigBox;
+import com.homesoft.iso.box.ImageSpatialExtents;
+import com.homesoft.iso.box.ImageSpatialExtentsBox;
+import com.homesoft.iso.box.ItemInfoEntry;
+import com.homesoft.iso.box.ItemInfoBox;
+import com.homesoft.iso.box.ItemLocation;
+import com.homesoft.iso.box.ItemLocationBox;
+import com.homesoft.iso.box.ItemPropertyAssociation;
+import com.homesoft.iso.box.ItemPropertyAssociationBox;
+import com.homesoft.iso.box.ItemReferenceBox;
+import com.homesoft.iso.box.PrimaryItemParser;
+import com.homesoft.iso.box.SingleItemTypeReference;
+import com.homesoft.iso.box.StringBox;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,22 +35,22 @@ import java.util.Objects;
  * Parser for HEIF based ISOBMFF files
  * This includes HEIC (HEVC) and AVIF (AV1) image files
  */
-public class Heif /*implements ParseListener*/ {
+public class Heif implements BoxTypes {
     private static final Object[] EMPTY_ARRAY = new Object[0];
-    public static final ContainerParser ROOT_PARSER = new GenericContainerParser()
-            .addParser(new FileTypeParser())
-            .addParser(BoxTypes.TYPE_meta, new GenericContainerParser(true, false)
-                    .addParser(BoxTypes.TYPE_pitm, new PrimaryItemParser())
-                    .addParser(BoxTypes.TYPE_iinf, new ItemInfoParser())
-                    .addParser(new ItemLocationParser())
-                    .addParser(BoxTypes.TYPE_iref, new ItemReferenceParser())
-                    .addParser(BoxTypes.TYPE_irpr, new GenericContainerParser()
-                            .addParser(new ItemPropertyAssociationParser())
-                            .addParser(BoxTypes.TYPE_ipco, new GenericContainerParser(false, true)
-                                    .addParser(new ImageSpatialExtentsParser())
-                                    .addParser(new HevcDecoderConfigParser())
-                                    .addParser(new Av1DecoderConfigParser())
-                                    .addParser(BoxTypes.TYPE_AUXC, new StringParser(true))
+    public static final ContainerBox ROOT_PARSER = new BaseContainerBox()
+            .addParser(new FileTypeBox())
+            .addParser(TYPE_meta, new BaseContainerBox(true, false)
+                    .addParser(TYPE_pitm, new PrimaryItemParser())
+                    .addParser(TYPE_iinf, new ItemInfoBox())
+                    .addParser(new ItemLocationBox())
+                    .addParser(TYPE_iref, new ItemReferenceBox())
+                    .addParser(TYPE_irpr, new BaseContainerBox()
+                            .addParser(new ItemPropertyAssociationBox())
+                            .addParser(TYPE_ipco, new BaseContainerBox(false, true)
+                                    .addParser(new ImageSpatialExtentsBox())
+                                    .addParser(new HevcDecoderConfigBox())
+                                    .addParser(new Av1DecoderConfigBox())
+                                    .addParser(TYPE_AUXC, new StringBox(true))
                             )
                     )
             );
@@ -74,8 +74,8 @@ public class Heif /*implements ParseListener*/ {
      * Parse a HEIF File using the default HEIF BoxParsers
      */
     public static Heif parse(final StreamReader streamReader) throws Exception {
-        final TypeListener typeListener = new TypeListener();
-        typeListener.addTypeListeners(BoxTypes.TYPE_pitm, BoxTypes.TYPE_iinf, BoxTypes.TYPE_ipma, BoxTypes.TYPE_iloc,  BoxTypes.TYPE_iref, BoxTypes.TYPE_ipco );
+        final TypeListener typeListener = new TypeListener(TYPE_meta);
+        typeListener.addTypeListeners(TYPE_pitm, TYPE_iinf, TYPE_ipma, TYPE_iloc, TYPE_iref, TYPE_ipco);
         IsoParser.parse(ROOT_PARSER, streamReader, typeListener);
         return new Heif(typeListener);
     }
@@ -98,13 +98,13 @@ public class Heif /*implements ParseListener*/ {
      * Private constructor validates the output of parse
      */
     private Heif(final TypeListener typeListener) {
-        primaryItemId = (Integer)typeListener.getType(BoxTypes.TYPE_pitm);
-        itemInfoEntries = DataUtil.toArray(typeListener.getType(BoxTypes.TYPE_iinf), ItemInfoEntry.class);
-        itemPropertyAssociations = (ItemPropertyAssociation[])Objects.requireNonNull(typeListener.getType(BoxTypes.TYPE_ipma));
-        propertyArray = DataUtil.toArray(typeListener.getType(BoxTypes.TYPE_ipco), Object.class);
-        final Object temp = typeListener.getType(BoxTypes.TYPE_iref);
+        primaryItemId = (Integer)typeListener.getType(TYPE_pitm);
+        itemInfoEntries = DataUtil.toArray(typeListener.getType(TYPE_iinf), ItemInfoEntry.class);
+        itemPropertyAssociations = (ItemPropertyAssociation[])Objects.requireNonNull(typeListener.getType(TYPE_ipma));
+        propertyArray = DataUtil.toArray(typeListener.getType(TYPE_ipco), Object.class);
+        final Object temp = typeListener.getType(TYPE_iref);
         itemReferences = temp == null ? new SingleItemTypeReference[0] : DataUtil.toArray(temp, SingleItemTypeReference.class);
-        itemLocations = (ItemLocation[]) Objects.requireNonNull(typeListener.getType(BoxTypes.TYPE_iloc));
+        itemLocations = (ItemLocation[]) Objects.requireNonNull(typeListener.getType(TYPE_iloc));
     }
 
     private Object[] getProperties(int id) {
@@ -176,7 +176,7 @@ public class Heif /*implements ParseListener*/ {
         final Object[] properties = getProperties(itemInfoEntry.id);
         List<Image> imageList = Collections.emptyList();
         for (SingleItemTypeReference reference : itemReferences) {
-            if (reference.type == ItemReferenceParser.TYPE_DIMG && reference.fromId == itemInfoEntry.id) {
+            if (reference.type == ItemReferenceBox.TYPE_DIMG && reference.fromId == itemInfoEntry.id) {
                 final int[] imageIds = reference.getToIds();
                 imageList = new ArrayList<>(imageIds.length);
                 for (int imageId : imageIds) {
@@ -212,7 +212,7 @@ public class Heif /*implements ParseListener*/ {
          * Get the <code>ImageSpatialExtents</code> aka dimensions for this image
          */
         public ImageSpatialExtents getImageSpatialExtents() {
-            Object data = getProperty(BoxTypes.TYPE_ispe);
+            Object data = getProperty(TYPE_ispe);
             if (data instanceof ImageSpatialExtents) {
                 return (ImageSpatialExtents) data;
             } else {
@@ -254,12 +254,8 @@ public class Heif /*implements ParseListener*/ {
         /**
          * Get the {@link CodecSpecificData} for this Image
          */
-        public ByteBuffer getCodecSpecificData() {
-            final CodecSpecificData codecSpecificData = DataUtil.findClass(CodecSpecificData.class, properties);
-            if (codecSpecificData != null) {
-                return codecSpecificData.getCSDByteBuffer();
-            }
-            return null;
+        public CodecSpecificData getCodecSpecificData() {
+            return DataUtil.findClass(CodecSpecificData.class, properties);
         }
 
         /**
