@@ -23,7 +23,7 @@ public class ItemInfoBox implements ContainerBox {
     }
 
     @Override
-    public Box getParser(int type) {
+    public Box getBox(int type) {
         return ITEM_INFO_ENTRY_PARSER;
     }
 

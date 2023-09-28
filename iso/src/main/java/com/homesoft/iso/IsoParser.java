@@ -29,7 +29,7 @@ public class IsoParser {
                     // This happens when we hit the end of a true stream
                     break;
                 }
-                final Box box = containerBox.getParser(boxHeader.type);
+                final Box box = containerBox.getBox(boxHeader.type);
                 if (box != null) {
                     final Object result = box.read(boxHeader, streamReader, box.isFullBox() ? streamReader.getInt() :  0);
                     if (box instanceof ContainerBox) {

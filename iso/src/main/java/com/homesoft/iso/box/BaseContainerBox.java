@@ -52,7 +52,7 @@ public class BaseContainerBox implements ContainerBox {
 
     @Nullable
     @Override
-    public Box getParser(int type) {
+    public Box getBox(int type) {
         final Box box = parserMap.get(type);
         if (box == null && includeUnknown) {
             return EXTENT_BOX_PARSER;

@@ -2,10 +2,12 @@ package com.homesoft.iso;
 
 import com.homesoft.iso.box.AudioSampleEntryBox;
 import com.homesoft.iso.box.Av1DecoderConfigBox;
+import com.homesoft.iso.box.AvcDecoderConfigBox;
 import com.homesoft.iso.box.FileTypeBox;
 import com.homesoft.iso.box.BaseContainerBox;
 import com.homesoft.iso.box.HandlerBox;
 import com.homesoft.iso.box.HevcDecoderConfigBox;
+import com.homesoft.iso.box.ItemListBox;
 import com.homesoft.iso.box.MediaHeaderBox;
 import com.homesoft.iso.box.MovieHeaderBox;
 import com.homesoft.iso.box.PixelAspectRatioBox;
@@ -59,7 +61,7 @@ public class Media implements BoxTypes {
                                                                     .addParser(new HevcDecoderConfigBox())
                                                                     .addParser(new Av1DecoderConfigBox())
                                                                     .addParser(new PixelAspectRatioBox())
-                                                                    //TODO: Add AVC
+                                                                    .addParser(TYPE_avcC, new AvcDecoderConfigBox())
                                                             )
                                                             .addParser(HandlerBox.SOUND, new AudioSampleEntryBox())
                                                     )
@@ -67,12 +69,19 @@ public class Media implements BoxTypes {
                                     )
                             )
                     )
+                    .addParser(TYPE_udta, new BaseContainerBox()
+                            .addParser(TYPE_meta, new BaseContainerBox(true, false)
+                                    .addParser(new HandlerBox())
+                                    .addParser(new ItemListBox())
+                            )
+                    )
             );
     }
 
     public static void main(String[] args) {
         //final File file = new File("C:\\Users\\dburc\\Pictures\\heic\\05 I Am A Man Of Constant Sorrow.m4a");
-        final File file = new File("C:\\Users\\dburc\\Pictures\\heic\\VID_20221110_113341.mp4");
+        //final File file = new File("C:\\Users\\dburc\\Pictures\\heic\\VID_20221110_113341.mp4");
+        final File file = new File("C:\\Users\\dburc\\Pictures\\heic\\01 We Are Never Ever Getting Back Together.m4a");
         try {
             final Media media = parse(file);
             System.out.println(media);

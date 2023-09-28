@@ -15,9 +15,12 @@ public interface BoxTypes {
     int TYPE_stbl = 0x7374626C; //moov->trak->mdia->minf->stbl - Sample Table Box
     int TYPE_stsd = 0x73747364; //moov->trak->mdia->minf->stbl->stsd - Sample Descriptions
     int TYPE_hvc1 = 0x68766331; //moov->trak->mdia->minf->stbl->stsd->hvc1 - HEVC description
+    int TYPE_avcC = 0x61766343; //moov->trak->mdia->minf->stbl->stsd->avc1-> avcC - AVC Codec Config
+    int TYPE_udta = 0x75647461; //moov->udta
+    int TYPE_ilst = 0x696C7374; //moov->udta->ilst
     int TYPE_uuid = 0x75756964; //uuid
 
-    int TYPE_meta = 0x6D657461; //meta
+    int TYPE_meta = 0x6D657461; //moov->udta->meta (Media) or meta (Heif)
     int TYPE_iloc = 0x696C6F63; //meta->iloc
     int TYPE_iinf = 0x69696E66; //meta->iinf
     int TYPE_infe = 0x696E6665; //meta->iinf->infe

@@ -27,6 +27,36 @@ public class DataUtil {
         }
     }
 
+    public static Number getNumber(StreamReader streamReader, int size, boolean signed) throws IOException {
+        switch (size) {
+            case 2: {
+                final short s = streamReader.getShort();
+                if (signed || s >= 0) {
+                    return s;
+                } else {
+                    return s & USHORT_MASK;
+                }
+            }
+            case 4: {
+                final int i = streamReader.getInt();
+                if (signed || i >= 0) {
+                    return i;
+                } else {
+                    return i & UINT_MASK;
+                }
+            }
+            case 1: {
+                final byte b = streamReader.get();
+                if (signed || b >= 0) {
+                    return b;
+                } else {
+                    return b & UBYTE_MASK;
+                }
+            }
+        }
+        return null;
+    }
+
     public static long getUInt(int i) {
         return i & UINT_MASK;
     }

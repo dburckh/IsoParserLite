@@ -1,10 +1,12 @@
 package com.homesoft.iso;
 
 
+import androidx.annotation.Nullable;
+
 import java.io.IOException;
 
 /**
- * Marker interface for BoxParsers
+ * Class used to manipulate Atoms or Box
  */
 public interface Box {
     /**
@@ -19,6 +21,8 @@ public interface Box {
      * Parse the Box
      * @param boxHeader contains generic box metadata
      * @param versionFlags zero unless {@link #isFullBox()}
+     * @return the contents of the box.  See individual implementations for specifics.
      */
+    @Nullable
     Object read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException;
 }

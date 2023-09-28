@@ -26,13 +26,13 @@ public class SampleDescriptionBox extends BaseContainerBox {
 
     @Nullable
     @Override
-    public Box getParser(int type) {
+    public Box getBox(int type) {
         // Try get a specific parser first
-        Box box = super.getParser(type);
+        Box box = super.getBox(type);
         if (box == null) {
             // If we fail, try to get one by handler
             Integer handler = (Integer) resultResolver.getResult(BoxTypes.TYPE_hdlr);
-            box = super.getParser(handler);
+            box = super.getBox(handler);
         }
         return box;
     }
