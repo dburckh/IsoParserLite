@@ -39,6 +39,9 @@ public class IsoParser {
                     } else {
                         parseListener.onParsed(boxHeader, result);
                     }
+                    if (parseListener.isCancelled()) {
+                        return;
+                    }
                 }
                 if (boxHeader.getSize() == BoxHeader.SIZE_EOF) {
                     break;
