@@ -11,15 +11,18 @@ import com.homesoft.iso.StreamReader;
 import java.io.IOException;
 
 /**
- * General Rules:
- * Numbers and classes where locale doesn't apply are returned as the actually class.
- * String and binary data are returned wrapped in a {@link Data} object to preserve the locale.
+ * The class parses the individual boxes from the ilst.
+ * All these tags should have a child item {@link #TYPE_data}
+ * <P><P>General Rules for data:
+ * <li>Numbers and classes where locale doesn't apply are returned as the actually class.</li>
+ * <li>String and binary data are returned wrapped in a {@link Data} object to preserve the locale.</li>
  */
 public class ITunesItemBox implements ContainerBox {
 
-    private static final int TYPE_data = 0x64617461;
+    public static final int TYPE_data = 0x64617461;
 
-    private BoxHeader itemBoxHeader;
+    private transient BoxHeader itemBoxHeader;
+
     private final Box dataBox = new Box() {
         @Override
         public boolean isFullBox() {
@@ -68,6 +71,7 @@ public class ITunesItemBox implements ContainerBox {
 
     @Override
     public Object read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
+        //Hack to pass the item Box Type to the data Box reader
         itemBoxHeader = boxHeader;
         return null;
     }
