@@ -4,6 +4,7 @@ import androidx.annotation.Nullable;
 
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.Box;
+import com.homesoft.iso.BoxTypes;
 import com.homesoft.iso.ContainerBox;
 import com.homesoft.iso.StreamReader;
 import com.homesoft.iso.TypedBox;
@@ -15,25 +16,24 @@ import java.util.HashMap;
  * Generic container parser
  */
 public class BaseContainerBox implements ContainerBox {
-    private static final ExtentBox EXTENT_BOX_PARSER = new ExtentBox();
+    /**
+     * Wildcard match for boxes
+     */
+    public static final int TYPE_DEFAULT = BoxTypes.TYPE_NA;
     final HashMap<Integer, Box> parserMap = new HashMap<>();
 
     private final boolean fullBox;
-    private final boolean includeUnknown;
-
     public BaseContainerBox() {
-        this(false, false);
+        this(false);
     }
     /**
      * Generic <code>BoxParser</code> for container boxes
      * @param fullBox true if this Box has version and flag data
-     * @param includeUnknown true if unknown boxes should be parsed a {@link Extent}
      *
      * @see ExtentBox
      */
-    public BaseContainerBox(boolean fullBox, boolean includeUnknown) {
+    public BaseContainerBox(boolean fullBox) {
         this.fullBox = fullBox;
-        this.includeUnknown = includeUnknown;
     }
 
     public BaseContainerBox addParser(TypedBox typedBox) {
@@ -53,9 +53,9 @@ public class BaseContainerBox implements ContainerBox {
     @Nullable
     @Override
     public Box getBox(int type) {
-        final Box box = parserMap.get(type);
-        if (box == null && includeUnknown) {
-            return EXTENT_BOX_PARSER;
+        Box box = parserMap.get(type);
+        if (box == null) {
+            box = parserMap.get(TYPE_DEFAULT);
         }
         return box;
     }

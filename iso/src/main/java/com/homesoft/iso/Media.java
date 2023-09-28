@@ -3,11 +3,12 @@ package com.homesoft.iso;
 import com.homesoft.iso.box.AudioSampleEntryBox;
 import com.homesoft.iso.box.Av1DecoderConfigBox;
 import com.homesoft.iso.box.AvcDecoderConfigBox;
+import com.homesoft.iso.box.Data;
+import com.homesoft.iso.box.DataBox;
 import com.homesoft.iso.box.FileTypeBox;
 import com.homesoft.iso.box.BaseContainerBox;
 import com.homesoft.iso.box.HandlerBox;
 import com.homesoft.iso.box.HevcDecoderConfigBox;
-import com.homesoft.iso.box.ItemListBox;
 import com.homesoft.iso.box.MediaHeaderBox;
 import com.homesoft.iso.box.MovieHeaderBox;
 import com.homesoft.iso.box.PixelAspectRatioBox;
@@ -70,9 +71,22 @@ public class Media implements BoxTypes {
                             )
                     )
                     .addParser(TYPE_udta, new BaseContainerBox()
-                            .addParser(TYPE_meta, new BaseContainerBox(true, false)
+                            .addParser(TYPE_meta, new BaseContainerBox(true)
                                     .addParser(new HandlerBox())
-                                    .addParser(new ItemListBox())
+                                    .addParser(TYPE_ilst, new BaseContainerBox()
+                                            .addParser(TYPE_gnre, new BaseContainerBox()
+                                                    .addParser(TYPE_data, new DataBox(Data.BE_UNSIGNED))
+                                            )
+                                            .addParser(TYPE_trkn, new BaseContainerBox()
+                                                    .addParser(TYPE_data, new DataBox(Data.SET_INDEX))
+                                            )
+                                            .addParser(TYPE_disk, new BaseContainerBox()
+                                                    .addParser(TYPE_data, new DataBox(Data.SET_INDEX))
+                                            )
+                                            .addParser(BaseContainerBox.TYPE_DEFAULT, new BaseContainerBox()
+                                                    .addParser(new DataBox())
+                                            )
+                                    )
                             )
                     )
             );

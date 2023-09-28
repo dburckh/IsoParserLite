@@ -14,7 +14,7 @@ public class SampleDescriptionBox extends BaseContainerBox {
     private final ResultResolver resultResolver;
 
     public SampleDescriptionBox(ResultResolver resultResolver) {
-        super(true, false);
+        super(true);
         this.resultResolver = resultResolver;
     }
 

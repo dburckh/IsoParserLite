@@ -6,6 +6,7 @@ import androidx.annotation.Nullable;
 import com.homesoft.iso.box.Av1DecoderConfigBox;
 import com.homesoft.iso.box.CodecSpecificData;
 import com.homesoft.iso.box.BaseContainerBox;
+import com.homesoft.iso.box.ExtentBox;
 import com.homesoft.iso.box.FileTypeBox;
 import com.homesoft.iso.box.HevcDecoderConfigBox;
 import com.homesoft.iso.box.ImageSpatialExtents;
@@ -39,18 +40,19 @@ public class Heif implements BoxTypes {
     private static final Object[] EMPTY_ARRAY = new Object[0];
     public static final ContainerBox ROOT_PARSER = new BaseContainerBox()
             .addParser(new FileTypeBox())
-            .addParser(TYPE_meta, new BaseContainerBox(true, false)
+            .addParser(TYPE_meta, new BaseContainerBox(true)
                     .addParser(TYPE_pitm, new PrimaryItemParser())
                     .addParser(TYPE_iinf, new ItemInfoBox())
                     .addParser(new ItemLocationBox())
                     .addParser(TYPE_iref, new ItemReferenceBox())
                     .addParser(TYPE_irpr, new BaseContainerBox()
                             .addParser(new ItemPropertyAssociationBox())
-                            .addParser(TYPE_ipco, new BaseContainerBox(false, true)
+                            .addParser(TYPE_ipco, new BaseContainerBox()
                                     .addParser(new ImageSpatialExtentsBox())
                                     .addParser(new HevcDecoderConfigBox())
                                     .addParser(new Av1DecoderConfigBox())
                                     .addParser(TYPE_AUXC, new StringBox(true))
+                                    .addParser(BaseContainerBox.TYPE_DEFAULT, new ExtentBox())
                             )
                     )
             );

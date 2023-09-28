@@ -10,12 +10,25 @@ import com.homesoft.iso.Type;
  */
 public class Data implements Type {
     // https://developer.apple.com/documentation/quicktime-file-format/well-known_types
+    /**
+     * UTF-8 String
+     */
     public static final int UTF_8 = 1;
     public static final int JPEG = 13;
     public static final int PNG = 14;
+    /**
+     * Big Endian Signed
+     */
     public static final int BE_SIGNED = 21;
+    /**
+     * Big Endian Unsigned
+     */
     public static final int BE_UNSIGNED = 22;
     public static final int BMP = 27;
+    /**
+     * Arbitrary constant for SetIndex types
+     */
+    public static final int SET_INDEX = 127;
 
     /**
      * Type of the surrounding box
@@ -29,7 +42,6 @@ public class Data implements Type {
 
     /**
      * Data contained in the data tag
-     * See {@link ITunesItemBox} for a list of known tags
      */
     @NonNull
     public Object data;
