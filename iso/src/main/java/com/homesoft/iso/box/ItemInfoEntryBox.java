@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.Box;
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.StreamReader;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class ItemInfoEntryBox implements Box {
         final long payloadSize = boxHeader.getPayloadSize(isFullBox());
         final long end = streamReader.position() + payloadSize;
 
-        final ByteBuffer byteBuffer = DataUtil.getByteBuffer(payloadSize, streamReader);
+        final ByteBuffer byteBuffer = StreamUtil.getByteBuffer(payloadSize, streamReader);
 
         final int id;
         final short protectionIndex;

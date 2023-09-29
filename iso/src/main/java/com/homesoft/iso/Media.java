@@ -46,6 +46,8 @@ public class Media implements BoxTypes {
     }
 
     public static ContainerBox getContainerParser(final ResultResolver resultResolver) {
+        final BaseContainerBox setIndexBox = new BaseContainerBox()
+                .addParser(TYPE_data, new DataBox(Data.SET_INDEX));
         return new BaseContainerBox()
             .addParser(new FileTypeBox())
             .addParser(TYPE_moov, new BaseContainerBox()
@@ -80,12 +82,8 @@ public class Media implements BoxTypes {
                                             .addParser(TYPE_gnre, new BaseContainerBox()
                                                     .addParser(TYPE_data, new DataBox(Data.BE_UNSIGNED))
                                             )
-                                            .addParser(TYPE_trkn, new BaseContainerBox()
-                                                    .addParser(TYPE_data, new DataBox(Data.SET_INDEX))
-                                            )
-                                            .addParser(TYPE_disk, new BaseContainerBox()
-                                                    .addParser(TYPE_data, new DataBox(Data.SET_INDEX))
-                                            )
+                                            .addParser(TYPE_trkn, setIndexBox)
+                                            .addParser(TYPE_disk, setIndexBox)
                                             .addParser(BaseContainerBox.TYPE_DEFAULT, new BaseContainerBox()
                                                     .addParser(new DataBox())
                                             )
@@ -118,10 +116,11 @@ public class Media implements BoxTypes {
     public static Media parse(final StreamReader streamReader) throws Exception {
         final HierarchyListener listener = new HierarchyListener(BoxTypes.TYPE_moov);
         IsoParser.parse(getContainerParser(listener), streamReader, listener);
+        System.out.println("\n" + listener);
         return new Media(listener);
     }
 
     private Media(final HierarchyListener listener) {
-
+        // TODO: Organize the media and tracks into something useful.
     }
 }

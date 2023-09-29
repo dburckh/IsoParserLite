@@ -16,6 +16,13 @@ public class IsoParser {
         parse(containerBox, streamReader, parseListener, end);
     }
 
+    /**
+     * Parse an ISO BMFF stream
+     * @param containerBox contains a hierarchy defining the stream
+     * @param streamReader input stream for the parser
+     * @param parseListener where {@link Box} results are emmitted to
+     * @param end last byte of the file or {@link Long#MAX_VALUE} if unknown
+     */
     public static void parse(ContainerBox containerBox,
                              StreamReader streamReader,
                              ParseListener parseListener,
@@ -53,9 +60,11 @@ public class IsoParser {
                     streamReader.skip(start - streamReader.position());
                 }
             }
-
     }
 
+    /**
+     * Create a new {@link RandomStreamReader} from the {@link File}
+     */
     public static RandomStreamReader newStreamReader(File file) throws IOException {
         RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
         final FileChannel fileChannel = randomAccessFile.getChannel();

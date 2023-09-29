@@ -2,7 +2,7 @@ package com.homesoft.iso.box;
 
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.BoxTypes;
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.StreamReader;
 import com.homesoft.iso.TypedBox;
 
@@ -17,7 +17,7 @@ public class ImageSpatialExtentsBox implements TypedBox {
 
     @Override
     public ImageSpatialExtents read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
-        final ByteBuffer byteBuffer = DataUtil.getByteBuffer(boxHeader.getPayloadSize(isFullBox()), streamReader);
+        final ByteBuffer byteBuffer = StreamUtil.getByteBuffer(boxHeader.getPayloadSize(isFullBox()), streamReader);
         return new ImageSpatialExtents(byteBuffer.getInt(), byteBuffer.getInt());
     }
 

@@ -2,7 +2,7 @@ package com.homesoft.iso.box;
 
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.Box;
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.StreamReader;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ public class AvcDecoderConfigBox implements Box {
 
     @Override
     public AvcDecoderConfig read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
-        final ByteBuffer byteBuffer = DataUtil.requireSharedBuffer(boxHeader.getPayloadSize(isFullBox()), streamReader);
+        final ByteBuffer byteBuffer = StreamUtil.requireSharedBuffer(boxHeader.getPayloadSize(isFullBox()), streamReader);
         final byte configurationVersion = byteBuffer.get();
         final byte profileIndication = byteBuffer.get();
         final byte profileCompatibility = byteBuffer.get();
@@ -27,7 +27,7 @@ public class AvcDecoderConfigBox implements Box {
         final byte nalUnitSize = (byte)(1 + (byteBuffer.get() & 3));
         final int spsCount = byteBuffer.get() & 0x1f;
         final byte[][] spsArray = getConfigs(spsCount, byteBuffer);
-        final byte[][] ppsArray = getConfigs(DataUtil.getUByte(byteBuffer), byteBuffer);
+        final byte[][] ppsArray = getConfigs(StreamUtil.getUByte(byteBuffer), byteBuffer);
         return new AvcDecoderConfig(configurationVersion, profileIndication, profileCompatibility,
                 levelIndication, nalUnitSize, spsArray, ppsArray);
     }
@@ -35,7 +35,7 @@ public class AvcDecoderConfigBox implements Box {
     private byte[][] getConfigs(final int count, ByteBuffer byteBuffer) {
         final byte[][] array = new byte[count][];
         for (int i=0;i<count;i++) {
-            final int size = DataUtil.getUShort(byteBuffer);
+            final int size = StreamUtil.getUShort(byteBuffer);
             final byte[] config = new byte[size];
             byteBuffer.get(config);
             array[i] = config;

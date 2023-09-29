@@ -3,7 +3,7 @@ package com.homesoft.iso.box;
 import androidx.annotation.NonNull;
 
 import com.homesoft.iso.BoxHeader;
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.Type;
 
 import java.nio.Buffer;
@@ -19,7 +19,7 @@ public class SingleItemTypeReference implements Type {
     private static int[] toInts(ShortBuffer shortBuffer) {
         final int[] toInts = new int[shortBuffer.capacity()];
         for (int i=0;i < toInts.length;i++) {
-            toInts[i] = shortBuffer.get(i) & DataUtil.USHORT_MASK;
+            toInts[i] = shortBuffer.get(i) & StreamUtil.USHORT_MASK;
         }
         return toInts;
     }

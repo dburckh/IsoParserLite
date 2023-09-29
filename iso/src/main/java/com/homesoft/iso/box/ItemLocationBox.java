@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.BoxTypes;
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.StreamReader;
 import com.homesoft.iso.TypedBox;
 
@@ -28,7 +28,7 @@ public class ItemLocationBox implements TypedBox {
         for (int i=0; i<itemCount;i++) {
             final ByteBuffer byteBuffer = streamReader.getSharedBuffer(itemIdSize + constructionMethodSize + 2 + baseOffsetSize + 2);
             final ItemLocation itemLocation = new ItemLocation(
-                    DataUtil.getInt(byteBuffer, itemIdSize),
+                    StreamUtil.getInt(byteBuffer, itemIdSize),
                     constructionMethodSize == 2 ? byteBuffer.getShort() : 0,
                     byteBuffer.getShort(),
                     getUInt(byteBuffer, baseOffsetSize)
@@ -60,9 +60,9 @@ public class ItemLocationBox implements TypedBox {
     private static long getUInt(ByteBuffer byteBuffer, int size) {
         switch (size) {
             case 2:
-                return DataUtil.getUShort(byteBuffer);
+                return StreamUtil.getUShort(byteBuffer);
             case 4:
-                return DataUtil.getUInt(byteBuffer);
+                return StreamUtil.getUInt(byteBuffer);
             case 0:
                 return 0;
             default:

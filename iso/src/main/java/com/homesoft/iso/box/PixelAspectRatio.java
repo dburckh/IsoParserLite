@@ -1,6 +1,6 @@
 package com.homesoft.iso.box;
 
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 
 public class PixelAspectRatio {
     private final int hSpacing;
@@ -12,10 +12,10 @@ public class PixelAspectRatio {
     }
 
     public long getHSpacing() {
-        return DataUtil.getUInt(hSpacing);
+        return StreamUtil.getUInt(hSpacing);
     }
 
     public long getVSpacing() {
-        return DataUtil.getUInt(vSpacing);
+        return StreamUtil.getUInt(vSpacing);
     }
 }

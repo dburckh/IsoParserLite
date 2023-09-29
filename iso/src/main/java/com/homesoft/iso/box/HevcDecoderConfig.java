@@ -1,7 +1,7 @@
 package com.homesoft.iso.box;
 
 import com.homesoft.iso.BoxTypes;
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.Type;
 
 import java.nio.ByteBuffer;
@@ -35,13 +35,13 @@ public class HevcDecoderConfig implements Type, CodecSpecificData {
         final ByteBuffer byteBuffer = ByteBuffer.wrap(bytes).asReadOnlyBuffer();
         // Skip the header
         byteBuffer.position(0x16);
-        final int count = DataUtil.getUByte(byteBuffer);
+        final int count = StreamUtil.getUByte(byteBuffer);
         final ArrayList<TypedConfig> list = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             final byte type = byteBuffer.get(); // nalUntType
-            final int naluCount = DataUtil.getUShort(byteBuffer.getShort()); //numNalus should be 1
+            final int naluCount = StreamUtil.getUShort(byteBuffer.getShort()); //numNalus should be 1
             for (int n = 0; n < naluCount; n++) {
-                final int nalSize = DataUtil.getUShort(byteBuffer);
+                final int nalSize = StreamUtil.getUShort(byteBuffer);
                 byteBuffer.limit(byteBuffer.position() + nalSize);
                 final ByteBuffer codecBuffer = byteBuffer.slice();
                 list.add(new TypedConfig(type, codecBuffer));

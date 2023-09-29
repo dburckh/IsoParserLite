@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
+/**
+ * Contains the type and size of a box.
+ */
 public class BoxHeader {
     /**
      * Indicates the box goes to the end of the file (stream)
@@ -28,15 +31,15 @@ public class BoxHeader {
      */
     @NonNull
     public static BoxHeader readBox(StreamReader streamReader) throws IOException, BufferUnderflowException {
-        ByteBuffer byteBuffer = DataUtil.requireSharedBuffer(8, streamReader);
+        ByteBuffer byteBuffer = StreamUtil.requireSharedBuffer(8, streamReader);
         Number size = byteBuffer.getInt();
         final int type = byteBuffer.getInt();
         if (size.intValue() == 1) {
-            byteBuffer = DataUtil.requireSharedBuffer(8, streamReader);
+            byteBuffer = StreamUtil.requireSharedBuffer(8, streamReader);
             size = byteBuffer.getLong();
         }
         if (type == BoxTypes.TYPE_uuid) {
-            byteBuffer = DataUtil.requireSharedBuffer(16, streamReader);
+            byteBuffer = StreamUtil.requireSharedBuffer(16, streamReader);
             byte[] uuid = new byte[16];
             byteBuffer.get(uuid);
             return new UUIDBoxHeader(size, type, uuid);
@@ -57,7 +60,7 @@ public class BoxHeader {
         if (size instanceof Long) {
             return size.longValue();
         } else {
-            return DataUtil.getUInt(size.intValue());
+            return StreamUtil.getUInt(size.intValue());
         }
     }
 
@@ -70,6 +73,10 @@ public class BoxHeader {
         }
     }
 
+    /**
+     * Calculate size of the payload (data after header and flags)
+     * @param fullBox Whether this box is a {@link Box#isFullBox()}
+     */
     public long getPayloadSize(boolean fullBox) {
         long size = getSize();
         if (size == 0) {
@@ -78,6 +85,9 @@ public class BoxHeader {
         return size - getHeaderSize(fullBox);
     }
 
+    /**
+     * Convert the int {@link Type} to a String
+     */
     public static StringBuilder typeToString(int type) {
         final StringBuilder sb = new StringBuilder();
         for (int i=0;i<4;i++) {
@@ -87,7 +97,6 @@ public class BoxHeader {
         sb.reverse();
         return sb;
     }
-
 
     @Override
     public String toString() {

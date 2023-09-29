@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.Box;
 import com.homesoft.iso.ContainerBox;
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.StreamReader;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ public class ItemInfoBox implements ContainerBox {
     @Override
     public Integer read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
         final int version = BoxHeader.getVersion(versionFlags);
-        return version == 0 ? DataUtil.getUShort(streamReader) : streamReader.getInt();
+        return version == 0 ? StreamUtil.getUShort(streamReader) : streamReader.getInt();
     }
 
     @Override

@@ -101,16 +101,16 @@ public class Heif implements BoxTypes {
      */
     private Heif(final TypeListener typeListener) {
         primaryItemId = (Integer)typeListener.getType(TYPE_pitm);
-        itemInfoEntries = DataUtil.toArray(typeListener.getType(TYPE_iinf), ItemInfoEntry.class);
+        itemInfoEntries = StreamUtil.toArray(typeListener.getType(TYPE_iinf), ItemInfoEntry.class);
         itemPropertyAssociations = (ItemPropertyAssociation[])Objects.requireNonNull(typeListener.getType(TYPE_ipma));
-        propertyArray = DataUtil.toArray(typeListener.getType(TYPE_ipco), Object.class);
+        propertyArray = StreamUtil.toArray(typeListener.getType(TYPE_ipco), Object.class);
         final Object temp = typeListener.getType(TYPE_iref);
-        itemReferences = temp == null ? new SingleItemTypeReference[0] : DataUtil.toArray(temp, SingleItemTypeReference.class);
+        itemReferences = temp == null ? new SingleItemTypeReference[0] : StreamUtil.toArray(temp, SingleItemTypeReference.class);
         itemLocations = (ItemLocation[]) Objects.requireNonNull(typeListener.getType(TYPE_iloc));
     }
 
     private Object[] getProperties(int id) {
-        final ItemPropertyAssociation itemPropertyAssociation = DataUtil.findId(id, itemPropertyAssociations);
+        final ItemPropertyAssociation itemPropertyAssociation = StreamUtil.findId(id, itemPropertyAssociations);
         if (itemPropertyAssociation == null) {
             return EMPTY_ARRAY;
         }
@@ -130,7 +130,7 @@ public class Heif implements BoxTypes {
      */
     @Nullable
     public Image getImage(int id) {
-        final ItemInfoEntry itemInfoEntry = DataUtil.findId(id, itemInfoEntries);
+        final ItemInfoEntry itemInfoEntry = StreamUtil.findId(id, itemInfoEntries);
         if (itemInfoEntry == null) {
             return null;
         }
@@ -142,7 +142,7 @@ public class Heif implements BoxTypes {
      */
     @Nullable
     Image getImage(@NonNull final ItemInfoEntry itemInfoEntry) {
-        final ItemLocation itemLocation = DataUtil.findId(itemInfoEntry.id, itemLocations);
+        final ItemLocation itemLocation = StreamUtil.findId(itemInfoEntry.id, itemLocations);
         if (itemLocation == null) {
             return null;
         }
@@ -152,7 +152,7 @@ public class Heif implements BoxTypes {
 
     @NonNull
     public Item getPrimaryItemId() throws InvalidObjectException {
-        final ItemInfoEntry itemInfoEntry = DataUtil.findId(primaryItemId, itemInfoEntries);
+        final ItemInfoEntry itemInfoEntry = StreamUtil.findId(primaryItemId, itemInfoEntries);
         if (itemInfoEntry == null) {
             throw new InvalidObjectException("Primary Item Info not found in ItemInfoEntries");
         }
@@ -207,7 +207,7 @@ public class Heif implements BoxTypes {
         }
 
         Type getProperty(int type) {
-            return DataUtil.findType(type, properties);
+            return StreamUtil.findType(type, properties);
         }
 
         /**
@@ -257,7 +257,7 @@ public class Heif implements BoxTypes {
          * Get the {@link CodecSpecificData} for this Image
          */
         public CodecSpecificData getCodecSpecificData() {
-            return DataUtil.findClass(CodecSpecificData.class, properties);
+            return StreamUtil.findClass(CodecSpecificData.class, properties);
         }
 
         /**

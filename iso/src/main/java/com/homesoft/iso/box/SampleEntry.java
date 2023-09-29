@@ -1,6 +1,6 @@
 package com.homesoft.iso.box;
 
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 
 public class SampleEntry {
     private final short dataReferenceIndex;
@@ -13,7 +13,7 @@ public class SampleEntry {
     }
 
     public int getDataReferenceIndex() {
-        return dataReferenceIndex & DataUtil.USHORT_MASK;
+        return dataReferenceIndex & StreamUtil.USHORT_MASK;
     }
 
     public String toStringPrefix() {

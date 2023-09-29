@@ -5,7 +5,7 @@ import androidx.annotation.Nullable;
 
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.BoxTypes;
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.StreamReader;
 import com.homesoft.iso.TypedBox;
 
@@ -53,12 +53,12 @@ public class DataBox implements TypedBox {
                 data = new String(streamReader.getBytes(dataSize));
                 break;
             case Data.BE_UNSIGNED:
-                return DataUtil.getNumber(streamReader, dataSize, false);
+                return StreamUtil.getNumber(streamReader, dataSize, false);
             case Data.BE_SIGNED:
-                return DataUtil.getNumber(streamReader, dataSize, true);
+                return StreamUtil.getNumber(streamReader, dataSize, true);
             case Data.SET_INDEX:
                 streamReader.getShort(); //Unknown
-                return new SetIndex(DataUtil.getUShort(streamReader), DataUtil.getUShort(streamReader));
+                return new SetIndex(StreamUtil.getUShort(streamReader), StreamUtil.getUShort(streamReader));
             case Data.JPEG:
             case Data.PNG:
             case Data.BMP:

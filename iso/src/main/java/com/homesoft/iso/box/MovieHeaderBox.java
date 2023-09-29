@@ -2,7 +2,7 @@ package com.homesoft.iso.box;
 
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.BoxTypes;
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.StreamReader;
 import com.homesoft.iso.TypedBox;
 
@@ -20,17 +20,17 @@ public class MovieHeaderBox implements TypedBox {
         final int version = BoxHeader.getVersion(versionFlags);
         final long creationTime, modificationTime, duration;
         final int timescale;
-        final ByteBuffer byteBuffer = DataUtil.requireSharedBuffer(boxHeader.getPayloadSize(isFullBox()), streamReader);
+        final ByteBuffer byteBuffer = StreamUtil.requireSharedBuffer(boxHeader.getPayloadSize(isFullBox()), streamReader);
         if (version == 1) {
             creationTime = byteBuffer.getLong();
             modificationTime = byteBuffer.getLong();
             timescale = byteBuffer.getInt();
             duration = byteBuffer.getLong();
         } else if (version == 0) {
-            creationTime = DataUtil.getUInt(byteBuffer);
-            modificationTime = DataUtil.getUInt(byteBuffer);
+            creationTime = StreamUtil.getUInt(byteBuffer);
+            modificationTime = StreamUtil.getUInt(byteBuffer);
             timescale = byteBuffer.getInt();
-            duration = DataUtil.getUInt(byteBuffer);
+            duration = StreamUtil.getUInt(byteBuffer);
         } else {
             return null;
         }

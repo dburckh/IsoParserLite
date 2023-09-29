@@ -94,6 +94,15 @@ public interface StreamReader extends AutoCloseable {
 
     /**
      * Attempt to get a ByteBuffer of a given requestedSize
+     *
+     * NOTES:
+     * This method is subject to change!
+     * Although it's super lightweight and convenient it's also super easy to mess stuff up.
+     * Especially by modifying the limit(), which is something that is useful.
+     * Maybe a shared ByteBuffer (RO & RW) and verify the limit() internally?
+     *
+     * At a minimum, in a future release it will be readonly
+     *
      * @return ByteBuffer that is directly tied to the StreamReader.
      *         Changes in the BytesBuffer position() will affect the StreamReader position()
      *         The ByteBuffer may not be the full <code>requestedSize</code>

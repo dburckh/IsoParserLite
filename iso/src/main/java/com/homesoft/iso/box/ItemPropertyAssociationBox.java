@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.BoxTypes;
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.StreamReader;
 import com.homesoft.iso.TypedBox;
 
@@ -24,11 +24,11 @@ public class ItemPropertyAssociationBox implements TypedBox {
         for (int i=0;i<entryCount;i++) {
             final int id;
             if (version < 1) {
-                id = DataUtil.getUShort(streamReader);
+                id = StreamUtil.getUShort(streamReader);
             } else {
                 id = streamReader.getInt();
             }
-            int associationSize = DataUtil.getUByte(streamReader);
+            int associationSize = StreamUtil.getUByte(streamReader);
             if (propertyIndexIsShort) {
                 associationSize *=2;
             }

@@ -1,6 +1,6 @@
 package com.homesoft.iso.box;
 
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.Media;
 
 import java.util.Date;
@@ -32,7 +32,7 @@ public class Header {
     }
 
     public long getDuration() {
-        return TimeUnit.SECONDS.toMillis(duration) / DataUtil.getUInt(timescale);
+        return TimeUnit.SECONDS.toMillis(duration) / StreamUtil.getUInt(timescale);
     }
 
     protected String toStringPrefix() {

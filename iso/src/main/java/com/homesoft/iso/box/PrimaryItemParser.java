@@ -2,7 +2,7 @@ package com.homesoft.iso.box;
 
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.Box;
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.StreamReader;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class PrimaryItemParser implements Box {
     public Number read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
         int version = BoxHeader.getVersion(versionFlags);
         final Number number = version == 0 ?
-                DataUtil.getUShort(streamReader) :
+                StreamUtil.getUShort(streamReader) :
                 streamReader.getInt();
         return number;
     }

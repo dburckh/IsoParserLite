@@ -2,7 +2,7 @@ package com.homesoft.iso.box;
 
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.Box;
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.StreamReader;
 
 import java.io.IOException;
@@ -17,8 +17,8 @@ public class SingleItemTypeReferenceBox implements Box {
 
     @Override
     public SingleItemTypeReference read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
-        final int fromId = DataUtil.getUShort(streamReader);
-        final int referenceCount = DataUtil.getUShort(streamReader);
+        final int fromId = StreamUtil.getUShort(streamReader);
+        final int referenceCount = StreamUtil.getUShort(streamReader);
         final ByteBuffer byteBuffer = ByteBuffer.wrap(streamReader.getBytes(2 * referenceCount));
         return new SingleItemTypeReference(boxHeader.type, fromId, byteBuffer.asShortBuffer());
     }

@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class DataUtil {
+public class StreamUtil {
     private static final long UINT_MASK = 0xffffffffL;
     public static final int USHORT_MASK = 0xffff;
     private static final int UBYTE_MASK = 0xff;
@@ -116,6 +116,14 @@ public class DataUtil {
         return byteBuffer;
     }
 
+    public static void skip(int bytes, ByteBuffer byteBuffer) {
+        byteBuffer.position(byteBuffer.position() + bytes);
+    }
+
+    //-------------------------------------------------------------------------
+    // None of the below belongs here, but I don't have  a place, yet.
+    //-------------------------------------------------------------------------
+
     /**
      *
      * @param type type searching for
@@ -140,14 +148,6 @@ public class DataUtil {
         }
         return null;
     }
-    public static int indexOf(int type, @NonNull Type[] typeArray) {
-        for (int i=0;i<typeArray.length;i++) {
-            if (typeArray[i].getType() == type) {
-                return i;
-            }
-        }
-        return -1;
-    }
 
     @Nullable
     public static <T extends Id> T findId(int id, @NonNull T[] idArray) {
@@ -167,10 +167,6 @@ public class DataUtil {
             }
         }
         return null;
-    }
-
-    public static void skip(int bytes, ByteBuffer byteBuffer) {
-        byteBuffer.position(byteBuffer.position() + bytes);
     }
 
     /**

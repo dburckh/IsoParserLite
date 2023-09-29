@@ -4,7 +4,7 @@ import androidx.annotation.Nullable;
 
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.BoxTypes;
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.StreamReader;
 import com.homesoft.iso.TypedBox;
 
@@ -60,23 +60,23 @@ public class ESDescriptorBox implements TypedBox {
     @Nullable
     @Override
     public DecoderConfigDescriptor read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
-        final ByteBuffer byteBuffer = DataUtil.requireSharedBuffer(boxHeader.getPayloadSize(isFullBox()), streamReader);
+        final ByteBuffer byteBuffer = StreamUtil.requireSharedBuffer(boxHeader.getPayloadSize(isFullBox()), streamReader);
         final byte tag = byteBuffer.get();
         if (tag != ES_DESCR_TAG) {
             return null;
         }
         final int size = readEsSize(byteBuffer);
-        DataUtil.skip(2, byteBuffer); //ES_ID
-        final int flags = DataUtil.getUByte(streamReader);
+        StreamUtil.skip(2, byteBuffer); //ES_ID
+        final int flags = StreamUtil.getUByte(streamReader);
         if ((flags & STREAM_DEPENDENCY_MASK) > 0) {
-            DataUtil.skip(2, byteBuffer); // dependsOnEsId
+            StreamUtil.skip(2, byteBuffer); // dependsOnEsId
         }
         if ((flags & URL_MASK) > 0) {
-            final int bytes = DataUtil.getUByte(byteBuffer);
-            DataUtil.skip(bytes, byteBuffer); // URL
+            final int bytes = StreamUtil.getUByte(byteBuffer);
+            StreamUtil.skip(bytes, byteBuffer); // URL
         }
         if ((flags & OCR_STREAM_MASK) > 0) {
-            DataUtil.skip(2, byteBuffer); // oCREsId
+            StreamUtil.skip(2, byteBuffer); // oCREsId
         }
 
         return getDecoderConfigDescriptor(byteBuffer);

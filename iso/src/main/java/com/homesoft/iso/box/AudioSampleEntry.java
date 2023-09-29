@@ -1,6 +1,6 @@
 package com.homesoft.iso.box;
 
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 
 public class AudioSampleEntry extends SampleEntry {
     private final short channelCount;
@@ -16,15 +16,15 @@ public class AudioSampleEntry extends SampleEntry {
     }
 
     public int getChannelCount() {
-        return DataUtil.getUShort(channelCount);
+        return StreamUtil.getUShort(channelCount);
     }
 
     public int getSampleSize() {
-        return DataUtil.getUShort(sampleSize);
+        return StreamUtil.getUShort(sampleSize);
     }
 
     public int getSampleRate() {
-        return (sampleRate >> 16) & DataUtil.USHORT_MASK ;
+        return (sampleRate >> 16) & StreamUtil.USHORT_MASK ;
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.homesoft.iso.box;
 
-import com.homesoft.iso.DataUtil;
+import com.homesoft.iso.StreamUtil;
 
 public class VisualSampleEntry extends SampleEntry {
     private final short width;
@@ -13,11 +13,11 @@ public class VisualSampleEntry extends SampleEntry {
     }
 
     public int getWidth() {
-        return DataUtil.getUShort(width);
+        return StreamUtil.getUShort(width);
     }
 
     public int getHeight() {
-        return DataUtil.getUShort(height);
+        return StreamUtil.getUShort(height);
     }
 
     @Override
