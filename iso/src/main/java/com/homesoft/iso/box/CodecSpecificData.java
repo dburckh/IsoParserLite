@@ -11,22 +11,22 @@ import java.util.List;
 public interface CodecSpecificData {
     byte TYPE_NA = 0;
 
-    List<Data> getCodecSpecificData();
+    List<TypedConfig> getCodecSpecificData();
 
-    class Data {
+    class TypedConfig {
         public final byte type;
         public final ByteBuffer byteBuffer;
 
-        public Data(byte type, ByteBuffer byteBuffer) {
+        public TypedConfig(byte type, ByteBuffer byteBuffer) {
             this.type = type;
             this.byteBuffer = byteBuffer;
         }
 
         @Nullable
-        public static ByteBuffer findType(final byte type, List<Data> list) {
-            for (Data data : list) {
-                if (type == data.type) {
-                    return data.byteBuffer;
+        public static ByteBuffer findType(final byte type, List<TypedConfig> list) {
+            for (TypedConfig typedConfig : list) {
+                if (type == typedConfig.type) {
+                    return typedConfig.byteBuffer;
                 }
             }
             return null;

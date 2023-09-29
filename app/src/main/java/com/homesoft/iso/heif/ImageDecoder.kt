@@ -40,11 +40,11 @@ class ImageDecoder(image: Image):AutoCloseable, VideoDecoder.DataSource,
         when (image.type) {
             ItemInfoEntry.ITEM_TYPE_hvc1 -> {
                 mimeType = MediaFormat.MIMETYPE_VIDEO_HEVC
-                val vps = CodecSpecificData.Data.findType(HevcDecoderConfig.TYPE_VPS, csdList)
+                val vps = CodecSpecificData.TypedConfig.findType(HevcDecoderConfig.TYPE_VPS, csdList)
                 val vpsSize = vps?.capacity() ?: throw IllegalArgumentException("VPS Required")
-                val sps = CodecSpecificData.Data.findType(HevcDecoderConfig.TYPE_SPS, csdList)
+                val sps = CodecSpecificData.TypedConfig.findType(HevcDecoderConfig.TYPE_SPS, csdList)
                 val spsSize = sps?.capacity() ?: throw IllegalArgumentException("SPS Required")
-                val pps = CodecSpecificData.Data.findType(HevcDecoderConfig.TYPE_PPS, csdList)
+                val pps = CodecSpecificData.TypedConfig.findType(HevcDecoderConfig.TYPE_PPS, csdList)
                 val ppsSize = pps?.capacity() ?: throw IllegalArgumentException("PPS Required")
                 csd0 = ByteBuffer.allocateDirect(vpsSize + spsSize + ppsSize + 12)
                 csd0.putInt(1)

@@ -20,6 +20,8 @@ public interface BoxTypes {
     int TYPE_stsd = 0x73747364; //moov->trak->mdia->minf->stbl->stsd - Sample Descriptions
     int TYPE_hvc1 = 0x68766331; //moov->trak->mdia->minf->stbl->stsd->hvc1 - HEVC description
     int TYPE_avcC = 0x61766343; //moov->trak->mdia->minf->stbl->stsd->avc1-> avcC - AVC Codec Config
+
+    int TYPE_esds = 0x65736473; //moov->trak->mdia->minf->stbl->stsd->mp4a->esds
     int TYPE_udta = 0x75647461; //moov->udta
     int TYPE_ilst = 0x696C7374; //moov->udta->ilst
 

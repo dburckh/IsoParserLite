@@ -20,7 +20,7 @@ public class BaseContainerBox implements ContainerBox {
      * Wildcard match for boxes
      */
     public static final int TYPE_DEFAULT = BoxTypes.TYPE_NA;
-    final HashMap<Integer, Box> parserMap = new HashMap<>();
+    final HashMap<Integer, Box> boxMap = new HashMap<>();
 
     private final boolean fullBox;
     public BaseContainerBox() {
@@ -41,7 +41,7 @@ public class BaseContainerBox implements ContainerBox {
     }
 
     public BaseContainerBox addParser(int type, Box parser) {
-        parserMap.put(type, parser);
+        boxMap.put(type, parser);
         return this;
     }
     @Nullable
@@ -53,9 +53,9 @@ public class BaseContainerBox implements ContainerBox {
     @Nullable
     @Override
     public Box getBox(int type) {
-        Box box = parserMap.get(type);
+        Box box = boxMap.get(type);
         if (box == null) {
-            box = parserMap.get(TYPE_DEFAULT);
+            box = boxMap.get(TYPE_DEFAULT);
         }
         return box;
     }
@@ -68,7 +68,7 @@ public class BaseContainerBox implements ContainerBox {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "{" + parserMap +
+        return getClass().getSimpleName() + "{" + boxMap +
                 '}';
     }
 }

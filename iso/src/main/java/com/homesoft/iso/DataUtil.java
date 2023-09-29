@@ -169,6 +169,10 @@ public class DataUtil {
         return null;
     }
 
+    public static void skip(int bytes, ByteBuffer byteBuffer) {
+        byteBuffer.position(byteBuffer.position() + bytes);
+    }
+
     /**
      * Blindly attempt to convert an Object to an array of T.
      * The Collection must contain items assignable to T

@@ -12,6 +12,6 @@ public class SampleEntryBox extends BaseContainerBox {
     @Override
     public SampleEntry read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
         streamReader.skip(6); // reserved
-        return new SampleEntry(streamReader.getShort());
+        return new SampleEntry(streamReader.getShort()); // dataReferenceIndex
     }
 }

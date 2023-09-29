@@ -54,16 +54,16 @@ public class AvcDecoderConfig implements CodecSpecificData {
         return ppsArray;
     }
 
-    private void addData(byte[][] bytes, byte type, List<Data> list) {
+    private void addData(byte[][] bytes, byte type, List<TypedConfig> list) {
         for (byte[] buffer : bytes) {
-            list.add(new Data(type, ByteBuffer.wrap(buffer).asReadOnlyBuffer()));
+            list.add(new TypedConfig(type, ByteBuffer.wrap(buffer).asReadOnlyBuffer()));
         }
     }
 
     @Override
-    public List<Data> getCodecSpecificData() {
+    public List<TypedConfig> getCodecSpecificData() {
         // Should always be a single SPS and PPS
-        final ArrayList<Data> list = new ArrayList<>(2);
+        final ArrayList<TypedConfig> list = new ArrayList<>(2);
         addData(spsArray, TYPE_SPS, list);
         addData(ppsArray, TYPE_PPS, list);
         return list;

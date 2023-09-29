@@ -5,6 +5,7 @@ import com.homesoft.iso.box.Av1DecoderConfigBox;
 import com.homesoft.iso.box.AvcDecoderConfigBox;
 import com.homesoft.iso.box.Data;
 import com.homesoft.iso.box.DataBox;
+import com.homesoft.iso.box.ESDescriptorBox;
 import com.homesoft.iso.box.FileTypeBox;
 import com.homesoft.iso.box.BaseContainerBox;
 import com.homesoft.iso.box.HandlerBox;
@@ -64,7 +65,9 @@ public class Media implements BoxTypes {
                                                                     .addParser(new PixelAspectRatioBox())
                                                                     .addParser(TYPE_avcC, new AvcDecoderConfigBox())
                                                             )
-                                                            .addParser(HandlerBox.SOUND, new AudioSampleEntryBox())
+                                                            .addParser(HandlerBox.SOUND, new AudioSampleEntryBox()
+                                                                    .addParser(new ESDescriptorBox())
+                                                            )
                                                     )
                                             )
                                     )
