@@ -6,6 +6,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 /**
@@ -66,8 +67,9 @@ public class HierarchyListener implements ParseListener, ResultResolver {
         return cancelled;
     }
 
+    @Nullable
     @Override
-    public Object getResult(int type) {
+    public Object getResult(int type) throws NoSuchElementException {
         for (TypedListResult typedListResult : stack) {
             if (typedListResult.type == type) {
                 return typedListResult;
@@ -82,7 +84,7 @@ public class HierarchyListener implements ParseListener, ResultResolver {
                 }
             }
         }
-        return null;
+        throw new NoSuchElementException();
     }
 
     private void toString(ArrayList<Type> list, StringBuilder sb, String indent) {

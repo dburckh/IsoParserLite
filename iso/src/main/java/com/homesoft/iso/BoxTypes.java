@@ -91,7 +91,7 @@ public interface BoxTypes {
     int TYPE_data = 0x64617461; //moov->udta->ilst->???->data
     int TYPE_uuid = 0x75756964; //uuid
 
-    int TYPE_meta = 0x6D657461; //moov->udta->meta (Media) or meta (Heif)
+    int TYPE_meta = 0x6D657461; //moov->udta->meta (Media) or meta (Heif/ISO Standard)
     int TYPE_iloc = 0x696C6F63; //meta->iloc
     int TYPE_iinf = 0x69696E66; //meta->iinf
     int TYPE_infe = 0x696E6665; //meta->iinf->infe
@@ -113,5 +113,7 @@ public interface BoxTypes {
     int TYPE_hvcC = 0x68766343; // meta->irpr->ipco->hvcC - HEVC Codec Config
     int TYPE_av1C = 0x61763143; // meta->irpr->ipco->av1C - AV1 Codec Config
     int TYPE_ispe = 0x69737065; // meta->irpr->ipco->ispe - Image Spacial Extents (dimensions)
+
+    int TYPE__xyz = 0xA978797A; // udta->@xyz or udta->meta->ilst->@xyz
 
 }

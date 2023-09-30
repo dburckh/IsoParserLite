@@ -8,6 +8,7 @@ import com.homesoft.iso.box.DataBox;
 import com.homesoft.iso.box.ESDescriptorBox;
 import com.homesoft.iso.box.FileTypeBox;
 import com.homesoft.iso.box.BaseContainerBox;
+import com.homesoft.iso.box.GPSCoordinatesBox;
 import com.homesoft.iso.box.HandlerBox;
 import com.homesoft.iso.box.HevcDecoderConfigBox;
 import com.homesoft.iso.box.MediaHeaderBox;
@@ -87,16 +88,20 @@ public class Media implements BoxTypes {
                                             .addParser(BaseContainerBox.TYPE_DEFAULT, new BaseContainerBox()
                                                     .addParser(new DataBox())
                                             )
+                                            .addParser(TYPE__xyz, new BaseContainerBox()
+                                                    .addParser(TYPE_data, new GPSCoordinatesBox())
+                                            )
                                     )
                             )
+                            .addParser(TYPE__xyz, new GPSCoordinatesBox())
                     )
             );
     }
 
     public static void main(String[] args) {
         //final File file = new File("C:\\Users\\dburc\\Pictures\\heic\\05 I Am A Man Of Constant Sorrow.m4a");
-        //final File file = new File("C:\\Users\\dburc\\Pictures\\heic\\VID_20221110_113341.mp4");
-        final File file = new File("C:\\Users\\dburc\\Pictures\\heic\\01 We Are Never Ever Getting Back Together.m4a");
+        final File file = new File("C:\\Users\\dburc\\Pictures\\heic\\PXL_20230922_013304243.TS.mp4");
+        //final File file = new File("C:\\Users\\dburc\\Pictures\\heic\\01 We Are Never Ever Getting Back Together.m4a");
         try {
             final Media media = parse(file);
             System.out.println(media);

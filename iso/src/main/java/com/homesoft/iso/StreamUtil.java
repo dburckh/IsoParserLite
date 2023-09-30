@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 public class StreamUtil {
+    public static final String[] EMPTY_STRING_ARRAY = new String[0];
     private static final long UINT_MASK = 0xffffffffL;
     public static final int USHORT_MASK = 0xffff;
     private static final int UBYTE_MASK = 0xff;
