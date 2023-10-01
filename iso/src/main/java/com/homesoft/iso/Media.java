@@ -99,33 +99,41 @@ public class Media implements BoxTypes {
     }
 
     public static void main(String[] args) {
-        //final File file = new File("C:\\Users\\dburc\\Pictures\\heic\\05 I Am A Man Of Constant Sorrow.m4a");
-        final File file = new File("C:\\Users\\dburc\\Pictures\\heic\\PXL_20230922_013304243.TS.mp4");
-        //final File file = new File("C:\\Users\\dburc\\Pictures\\heic\\01 We Are Never Ever Getting Back Together.m4a");
+        final String path;
+        if (args.length == 0) {
+            path = "C:\\Users\\dburc\\Pictures\\heic\\PXL_20230922_013304243.TS.mp4";
+            //path = "C:\\Users\\dburc\\Pictures\\heic\\01 We Are Never Ever Getting Back Together.m4a";
+            //path = "C:\\\\Users\\\\dburc\\\\Pictures\\\\heic\\\\05 I Am A Man Of Constant Sorrow.m4a";
+        } else {
+            path = args[0];
+        }
+        final File file = new File(path);
+        //final File file = new File();
         try {
-            final Media media = parse(file);
-            System.out.println(media);
+            dump(file);
+            //System.out.println(media);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static Media parse(File file) throws Exception {
+    public static void dump(File file) throws Exception {
         try (final StreamReader streamReader = IsoParser.newStreamReader(file)) {
-            return parse(streamReader);
+            dump(streamReader);
         }
     }
     /**
      * Parse a HEIF File using the default HEIF BoxParsers
      */
-    public static Media parse(final StreamReader streamReader) throws Exception {
+    public static void dump(final StreamReader streamReader) throws Exception {
         final HierarchyListener listener = new HierarchyListener(BoxTypes.TYPE_moov);
         IsoParser.parse(getContainerParser(listener), streamReader, listener);
         System.out.println("\n" + listener);
-        return new Media(listener);
     }
 
-    private Media(final HierarchyListener listener) {
+    public Media() {
         // TODO: Organize the media and tracks into something useful.
     }
+
+
 }

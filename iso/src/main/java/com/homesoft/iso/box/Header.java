@@ -3,7 +3,8 @@ package com.homesoft.iso.box;
 import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.Media;
 
-import java.util.Date;
+import java.text.DateFormat;
+import java.text.FieldPosition;
 import java.util.concurrent.TimeUnit;
 
 public class Header {
@@ -35,8 +36,28 @@ public class Header {
         return TimeUnit.SECONDS.toMillis(duration) / StreamUtil.getUInt(timescale);
     }
 
+    private static String appendDateTime(String prefix, String name, long millis, StringBuffer sb) {
+        if (millis != Media.MS_B4_1904) {
+            final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
+            final FieldPosition fieldPosition = new FieldPosition(0);
+            sb.append(prefix);
+            sb.append(name);
+            dateFormat.format(millis, sb, fieldPosition);
+            return ", ";
+        }
+        return prefix;
+    }
+
     protected String toStringPrefix() {
-        return getClass().getSimpleName() + "{creation="+new Date(getCreationTime()) + ", modification=" + new Date(getModificationTime()) + ", duration=" + getDuration()/1000f;
+        final StringBuffer sb = new StringBuffer(getClass().getSimpleName());
+        sb.append("{");
+        String prefix = "";
+        prefix = appendDateTime(prefix, "creation=", getCreationTime(), sb);
+        prefix = appendDateTime(prefix, "modification=", getModificationTime(), sb);
+        sb.append(prefix);
+        sb.append( "duration=" );
+        sb.append(getDuration()/1000f);
+        return sb.toString();
     }
     public String toString() {
         return toStringPrefix() + "}";

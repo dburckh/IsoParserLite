@@ -98,6 +98,10 @@ public class HierarchyListener implements ParseListener, ResultResolver {
         }
     }
 
+    /**
+     * Pretty print the hierarchy.
+     * Contains new lines.
+     */
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -121,14 +125,12 @@ public class HierarchyListener implements ParseListener, ResultResolver {
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder("Result{type=");
-            sb.append(BoxHeader.typeToString(type));
+            final StringBuilder sb = new StringBuilder(BoxHeader.typeToString(type));
             if (result != null) {
-                sb.append(", result=");
+                sb.append('=');
                 sb.append(result);
             }
-            sb.append("}");
-            return sb.toString();
+           return sb.toString();
         }
     }
 
