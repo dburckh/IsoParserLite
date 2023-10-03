@@ -2,16 +2,16 @@ package com.homesoft.iso.box;
 
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.BoxTypes;
+import com.homesoft.iso.DependencyManager;
 import com.homesoft.iso.StreamUtil;
-import com.homesoft.iso.Media;
-import com.homesoft.iso.ResultResolver;
+import com.homesoft.iso.Movie;
 import com.homesoft.iso.StreamReader;
 import com.homesoft.iso.TypedBox;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class TrackHeaderBox implements TypedBox {
+public class TrackHeaderBox implements TypedBox, DependencyManager.Listener<Header> {
     private static final int SKIP = 8 + // reserved
         2 + // layer
         2 + // alternateGroup
@@ -19,11 +19,17 @@ public class TrackHeaderBox implements TypedBox {
         2 + // reserved
         9 * 4; // matrix
 
-    private final ResultResolver resultResolver;
+    private Header movieHeader;
 
-    public TrackHeaderBox(ResultResolver resultResolver) {
-        this.resultResolver = resultResolver;
+    public TrackHeaderBox(DependencyManager dependencyManager, MovieHeaderBox movieHeaderBox) {
+        dependencyManager.addDependency(movieHeaderBox, this);
     }
+
+    @Override
+    public void onResult(Header result) {
+        movieHeader = result;
+    }
+
     @Override
     public boolean isFullBox() {
         return true;
@@ -51,10 +57,9 @@ public class TrackHeaderBox implements TypedBox {
             return null;
         }
         byteBuffer.position(byteBuffer.position() + SKIP);
-        final float width = Media.toFloat(byteBuffer.getInt());
-        final float height = Media.toFloat(byteBuffer.getInt());
-        final Header header = (Header) resultResolver.getResult(BoxTypes.TYPE_mvhd);
-        return new TrackHeader(creationTime, modificationTime, header.getTimescale(),
+        final float width = Movie.toFloat(byteBuffer.getInt());
+        final float height = Movie.toFloat(byteBuffer.getInt());
+        return new TrackHeader(creationTime, modificationTime, movieHeader.getTimescale(),
                 duration, trackId, width, height);
     }
 

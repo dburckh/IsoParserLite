@@ -49,19 +49,19 @@ public class TypeListener implements ParseListener {
     }
 
     @Override
-    public void onContainerStart(BoxHeader boxHeader, Object result) {
-        if (typeMap.containsKey(boxHeader.type)) {
-            typeMap.put(boxHeader.type, new ArrayList<>());
+    public void onContainerStart(int type, Object result) {
+        if (typeMap.containsKey(type)) {
+            typeMap.put(type, new ArrayList<>());
         }
-        stack.push(boxHeader.type);
+        stack.push(type);
         updateCurrentContainer();
     }
 
     @Override
-    public void onParsed(BoxHeader boxHeader, Object result) {
+    public void onParsed(int type, Object result) {
         if (result != null) {
-            if (typeMap.containsKey(boxHeader.type)) {
-                typeMap.put(boxHeader.type, result);
+            if (typeMap.containsKey(type)) {
+                typeMap.put(type, result);
             }
             if (currentContainer != null) {
                 currentContainer.add(result);
@@ -70,10 +70,10 @@ public class TypeListener implements ParseListener {
     }
 
     @Override
-    public void onContainerEnd(BoxHeader boxHeader) {
+    public void onContainerEnd(int type) {
         stack.pop();
         updateCurrentContainer();
-        if (boxHeader.type == cancelType) {
+        if (type == cancelType) {
             cancelled = true;
         }
     }

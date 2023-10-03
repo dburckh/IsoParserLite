@@ -10,7 +10,7 @@ import java.io.IOException;
 public class AudioSampleEntryBox extends SampleEntryBox {
     @NonNull
     @Override
-    public SampleEntry read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
+    public AudioSampleEntry read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
         final SampleEntry sampleEntry = super.read(boxHeader, streamReader, versionFlags);
         streamReader.skip(4 * 2); //reserved
         final short channelCount = streamReader.getShort();

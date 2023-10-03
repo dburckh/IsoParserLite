@@ -4,18 +4,22 @@ import androidx.annotation.Nullable;
 
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.Box;
-import com.homesoft.iso.BoxTypes;
-import com.homesoft.iso.ResultResolver;
+import com.homesoft.iso.DependencyManager;
 import com.homesoft.iso.StreamReader;
 
 import java.io.IOException;
 
-public class SampleDescriptionBox extends BaseContainerBox {
-    private final ResultResolver resultResolver;
+public class SampleDescriptionBox extends BaseContainerBox implements DependencyManager.Listener<Integer> {
+    private Integer handler;
 
-    public SampleDescriptionBox(ResultResolver resultResolver) {
+    public SampleDescriptionBox(DependencyManager dependencyManager, HandlerBox handlerBox) {
         super(true);
-        this.resultResolver = resultResolver;
+        dependencyManager.addDependency(handlerBox, this);
+   }
+
+    @Override
+    public void onResult(Integer result) {
+        handler = result;
     }
 
     @Nullable
@@ -29,9 +33,8 @@ public class SampleDescriptionBox extends BaseContainerBox {
     public Box getBox(int type) {
         // Try get a specific parser first
         Box box = super.getBox(type);
-        if (box == null) {
+        if (box == null && handler != null) {
             // If we fail, try to get one by handler
-            Integer handler = (Integer) resultResolver.getResult(BoxTypes.TYPE_hdlr);
             box = super.getBox(handler);
         }
         return box;

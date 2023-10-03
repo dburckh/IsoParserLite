@@ -57,29 +57,27 @@ public class Heif implements BoxTypes {
                     )
             );
 
+    public static IsoParser<Heif> getParser() {
+        final TypeListener typeListener = new TypeListener(TYPE_meta);
+        typeListener.addTypeListeners(TYPE_pitm, TYPE_iinf, TYPE_ipma, TYPE_iloc, TYPE_iref, TYPE_ipco);
+        return new IsoParser<Heif>(ROOT_PARSER, typeListener) {
+            @Override
+            public Heif parse(@NonNull StreamReader streamReader) throws IOException {
+                parse(streamReader);
+                return new Heif(typeListener);
+            }
+        };
+    }
+
     public static void main(String[] args) {
         final File file = new File("C:\\Users\\dburc\\Pictures\\heic\\20230907_162647.heic");
         try {
-            final Heif heif = parse(file);
+            final IsoParser<Heif> heifIsoParser = getParser();
+            final Heif heif = heifIsoParser.parse(file);
             System.out.println(heif);
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public static Heif parse(File file) throws Exception {
-        try (final StreamReader streamReader = IsoParser.newStreamReader(file)) {
-            return parse(streamReader);
-        }
-    }
-    /**
-     * Parse a HEIF File using the default HEIF BoxParsers
-     */
-    public static Heif parse(final StreamReader streamReader) throws Exception {
-        final TypeListener typeListener = new TypeListener(TYPE_meta);
-        typeListener.addTypeListeners(TYPE_pitm, TYPE_iinf, TYPE_ipma, TYPE_iloc, TYPE_iref, TYPE_ipco);
-        IsoParser.parse(ROOT_PARSER, streamReader, typeListener);
-        return new Heif(typeListener);
     }
 
     private final int primaryItemId;

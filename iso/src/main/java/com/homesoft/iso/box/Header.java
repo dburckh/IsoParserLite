@@ -1,7 +1,7 @@
 package com.homesoft.iso.box;
 
 import com.homesoft.iso.StreamUtil;
-import com.homesoft.iso.Media;
+import com.homesoft.iso.Movie;
 
 import java.text.DateFormat;
 import java.text.FieldPosition;
@@ -21,11 +21,11 @@ public class Header {
     }
 
     public long getCreationTime() {
-        return Media.toJavaTime(creationTime);
+        return Movie.toJavaTime(creationTime);
     }
 
     public long getModificationTime() {
-        return Media.toJavaTime(modificationTime);
+        return Movie.toJavaTime(modificationTime);
     }
 
     public int getTimescale() {
@@ -37,7 +37,7 @@ public class Header {
     }
 
     private static String appendDateTime(String prefix, String name, long millis, StringBuffer sb) {
-        if (millis != Media.MS_B4_1904) {
+        if (millis != Movie.MS_B4_1904) {
             final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
             final FieldPosition fieldPosition = new FieldPosition(0);
             sb.append(prefix);

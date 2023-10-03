@@ -15,12 +15,16 @@ import java.util.Objects;
  * Items that are {@link Type} will be stored as is.
  * Other items will be wrapped in a {@link TypedResult}
  */
-public class HierarchyListener implements ParseListener, ResultResolver {
+public class HierarchyListener implements ParseListener {
     private final ArrayDeque<TypedListResult> stack = new ArrayDeque<>();
     private final TypedListResult root = new TypedListResult(BoxTypes.TYPE_NA, null);
     private final int cancelType;
 
     private boolean cancelled = false;
+
+    public HierarchyListener() {
+        this(BoxTypes.TYPE_NA);
+    }
     /**
      * Default constructor
      * @param cancelType cause parsing to stop after a {@link ContainerBox} of this type
@@ -32,32 +36,32 @@ public class HierarchyListener implements ParseListener, ResultResolver {
     }
 
     @Override
-    public void onContainerStart(BoxHeader boxHeader, Object result) {
+    public void onContainerStart(int type, Object result) {
         final TypedListResult parentList = Objects.requireNonNull(stack.peek());
-        final TypedListResult childList = new TypedListResult(boxHeader.type, result);
+        final TypedListResult childList = new TypedListResult(type, result);
         parentList.add(childList);
         stack.push(childList);
     }
 
     @Override
-    public void onParsed(BoxHeader boxHeader, Object result) {
+    public void onParsed(int type, Object result) {
         if (result == null) {
             return;
         }
         final TypedListResult typedList = Objects.requireNonNull(stack.peek());
-        final Type type;
+        final Type resultType;
         if (result instanceof Type) {
-            type = (Type) result;
+            resultType = (Type) result;
         } else {
-            type = new TypedResult(boxHeader.type, result);
+            resultType = new TypedResult(type, result);
         }
-        typedList.list.add(type);
+        typedList.list.add(resultType);
     }
 
     @Override
-    public void onContainerEnd(BoxHeader boxHeader) {
+    public void onContainerEnd(int type) {
         stack.pop();
-        if (boxHeader.type == cancelType) {
+        if (type == cancelType) {
             cancelled = true;
         }
     }
@@ -65,26 +69,6 @@ public class HierarchyListener implements ParseListener, ResultResolver {
     @Override
     public boolean isCancelled() {
         return cancelled;
-    }
-
-    @Nullable
-    @Override
-    public Object getResult(int type) throws NoSuchElementException {
-        for (TypedListResult typedListResult : stack) {
-            if (typedListResult.type == type) {
-                return typedListResult;
-            }
-            for (Type result : typedListResult.list) {
-                if (result.getType() == type) {
-                    if (result instanceof TypedResult) {
-                        return ((TypedResult) result).result;
-                    } else {
-                        return result;
-                    }
-                }
-            }
-        }
-        throw new NoSuchElementException();
     }
 
     private void toString(ArrayList<Type> list, StringBuilder sb, String indent) {
