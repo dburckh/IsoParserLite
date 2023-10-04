@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.Box;
+import com.homesoft.iso.BoxTypes;
 import com.homesoft.iso.ContainerBox;
 import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.StreamReader;
@@ -24,7 +25,10 @@ public class ItemInfoBox implements ContainerBox {
 
     @Override
     public Box getBox(int type) {
-        return ITEM_INFO_ENTRY_PARSER;
+        if (type == BoxTypes.TYPE_infe) {
+            return ITEM_INFO_ENTRY_PARSER;
+        }
+        return null;
     }
 
     @Override

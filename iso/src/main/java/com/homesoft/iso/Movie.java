@@ -26,6 +26,9 @@ import com.homesoft.iso.box.TrackHeader;
 import com.homesoft.iso.box.TrackHeaderBox;
 import com.homesoft.iso.box.VisualSampleEntry;
 import com.homesoft.iso.box.VisualSampleEntryBox;
+import com.homesoft.iso.listener.HierarchyListener;
+import com.homesoft.iso.listener.IListListener;
+import com.homesoft.iso.listener.AnnotationListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -134,10 +137,10 @@ public class Movie implements BoxTypes {
     }
 
     public static IsoParser<Movie> getParser() {
-        final ResultProcessor resultProcessor = new ResultProcessor();
-        final ParseListener parseListener = new IListListener(resultProcessor);
-        final Work work = new Work(resultProcessor);
-        resultProcessor.add(work);
+        final AnnotationListener annotationListener = new AnnotationListener();
+        final ParseListener parseListener = new IListListener(annotationListener);
+        final Work work = new Work(annotationListener);
+        annotationListener.add(work);
         return new IsoParser<Movie>(ROOT_CONTAINER, parseListener) {
             @Override
             public Movie parse(@NonNull StreamReader streamReader) throws IOException {
@@ -162,9 +165,9 @@ public class Movie implements BoxTypes {
     }
 
     private static class Work {
-        private final ResultProcessor resultProcessor;
-        Work(ResultProcessor resultProcessor) {
-            this.resultProcessor = resultProcessor;
+        private final AnnotationListener annotationListener;
+        Work(AnnotationListener annotationListener) {
+            this.annotationListener = annotationListener;
         }
         private Header movieHeader;
 
@@ -190,7 +193,7 @@ public class Movie implements BoxTypes {
         public void setTrackHeader(TrackHeader trackHeader) {
             final TrackInfo trackInfo = new TrackInfo(trackHeader);
             trackList.add(trackInfo);
-            resultProcessor.add(trackInfo);
+            annotationListener.add(trackInfo);
         }
 
         private static class TrackInfo {

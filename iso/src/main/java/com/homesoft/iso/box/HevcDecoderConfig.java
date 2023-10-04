@@ -38,13 +38,13 @@ public class HevcDecoderConfig implements Type, CodecSpecificData {
         final int count = StreamUtil.getUByte(byteBuffer);
         final ArrayList<TypedConfig> list = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            final byte type = byteBuffer.get(); // nalUntType
+            final int type = byteBuffer.get() & 0x3f; // nalUntType
             final int naluCount = StreamUtil.getUShort(byteBuffer.getShort()); //numNalus should be 1
             for (int n = 0; n < naluCount; n++) {
                 final int nalSize = StreamUtil.getUShort(byteBuffer);
                 byteBuffer.limit(byteBuffer.position() + nalSize);
                 final ByteBuffer codecBuffer = byteBuffer.slice();
-                list.add(new TypedConfig(type, codecBuffer));
+                list.add(new TypedConfig((byte)type, codecBuffer));
                 byteBuffer.position(byteBuffer.limit());
                 byteBuffer.limit(bytes.length);
             }

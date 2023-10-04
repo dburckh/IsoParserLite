@@ -21,6 +21,9 @@ import com.homesoft.iso.box.ItemReferenceBox;
 import com.homesoft.iso.box.PrimaryItemParser;
 import com.homesoft.iso.box.SingleItemTypeReference;
 import com.homesoft.iso.box.StringBox;
+import com.homesoft.iso.listener.CompositeListener;
+import com.homesoft.iso.listener.ListListener;
+import com.homesoft.iso.listener.AnnotationListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +40,9 @@ import java.util.Objects;
  * This includes HEIC (HEVC) and AVIF (AV1) image files
  */
 public class Heif implements BoxTypes {
+    private static final int TYPE_ipco_list = TYPE_ipco | Integer.MIN_VALUE;
+    private static final int TYPE_iref_list = TYPE_iref | Integer.MIN_VALUE;
+    private static final int TYPE_iinf_list = TYPE_iinf | Integer.MIN_VALUE;
     private static final Object[] EMPTY_ARRAY = new Object[0];
     public static final ContainerBox ROOT_PARSER = new BaseContainerBox()
             .addParser(new FileTypeBox())
@@ -58,13 +64,17 @@ public class Heif implements BoxTypes {
             );
 
     public static IsoParser<Heif> getParser() {
-        final TypeListener typeListener = new TypeListener(TYPE_meta);
-        typeListener.addTypeListeners(TYPE_pitm, TYPE_iinf, TYPE_ipma, TYPE_iloc, TYPE_iref, TYPE_ipco);
-        return new IsoParser<Heif>(ROOT_PARSER, typeListener) {
+        final Work work = new Work();
+        final AnnotationListener annotationListener = new AnnotationListener(work);
+        final CompositeListener compositeListener = new CompositeListener(annotationListener);
+        compositeListener.add(new ListListener(annotationListener, TYPE_iinf, TYPE_iinf_list));
+        compositeListener.add(new ListListener(annotationListener, TYPE_ipco, TYPE_ipco_list));
+        compositeListener.add(new ListListener(annotationListener, TYPE_iref, TYPE_iref_list));
+        return new IsoParser<Heif>(ROOT_PARSER, compositeListener) {
             @Override
             public Heif parse(@NonNull StreamReader streamReader) throws IOException {
-                parse(streamReader);
-                return new Heif(typeListener);
+                parseImpl(streamReader);
+                return new Heif(work);
             }
         };
     }
@@ -97,14 +107,14 @@ public class Heif implements BoxTypes {
     /**
      * Private constructor validates the output of parse
      */
-    private Heif(final TypeListener typeListener) {
-        primaryItemId = (Integer)typeListener.getType(TYPE_pitm);
-        itemInfoEntries = StreamUtil.toArray(typeListener.getType(TYPE_iinf), ItemInfoEntry.class);
-        itemPropertyAssociations = (ItemPropertyAssociation[])Objects.requireNonNull(typeListener.getType(TYPE_ipma));
-        propertyArray = StreamUtil.toArray(typeListener.getType(TYPE_ipco), Object.class);
-        final Object temp = typeListener.getType(TYPE_iref);
-        itemReferences = temp == null ? new SingleItemTypeReference[0] : StreamUtil.toArray(temp, SingleItemTypeReference.class);
-        itemLocations = (ItemLocation[]) Objects.requireNonNull(typeListener.getType(TYPE_iloc));
+    private Heif(final Work work) {
+        primaryItemId = Objects.requireNonNull(work.primaryItemType);
+        itemInfoEntries = StreamUtil.toArray(Objects.requireNonNull(work.itemInfoEntryList), ItemInfoEntry.class);
+        itemPropertyAssociations = Objects.requireNonNull(work.itemPropertyAssociations);
+        propertyArray = StreamUtil.toArray(Objects.requireNonNull(work.properyList), Object.class);
+        itemReferences = work.itemReferenceList == null ? new SingleItemTypeReference[0] :
+                StreamUtil.toArray(work.itemReferenceList, SingleItemTypeReference.class);
+        itemLocations = Objects.requireNonNull(work.itemLocations);
     }
 
     private Object[] getProperties(int id) {
@@ -188,6 +198,21 @@ public class Heif implements BoxTypes {
             }
         }
         return new Grid(itemInfoEntry, properties, imageList);
+    }
+
+    private static class Work {
+        @TypeResult(BoxTypes.TYPE_pitm)
+        Integer primaryItemType;
+        @TypeResult(BoxTypes.TYPE_ipma)
+        ItemPropertyAssociation[] itemPropertyAssociations;
+        @TypeResult(TYPE_iinf_list)
+        List<ItemInfoEntry> itemInfoEntryList;
+        @TypeResult(TYPE_ipco_list)
+        List<Object> properyList;
+        @TypeResult(TYPE_iref_list)
+        List<SingleItemTypeReference> itemReferenceList;
+        @TypeResult(BoxTypes.TYPE_iloc)
+        ItemLocation[] itemLocations;
     }
 
     public static class Item implements Type {

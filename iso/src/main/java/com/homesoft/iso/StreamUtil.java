@@ -173,13 +173,12 @@ public class StreamUtil {
     /**
      * Blindly attempt to convert an Object to an array of T.
      * The Collection must contain items assignable to T
-     * @param object Must contain an {@link java.util.Collection} of T
+     * @param
      * @param c the contents of the collection
      * @return An array of type T
      * @param <T>
      */
-    public static <T> T[] toArray(Object object, Class<T> c) throws ClassCastException{
-        Collection<T> collection = (Collection) object;
+    public static <T> T[] toArray(Collection<T> collection, Class<T> c) throws ClassCastException{
         T[] array = (T[])Array.newInstance(c, collection.size());
         final Iterator<T> it = collection.iterator();
         for (int i=0;it.hasNext();i++) {

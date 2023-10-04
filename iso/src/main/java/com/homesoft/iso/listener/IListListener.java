@@ -1,11 +1,15 @@
-package com.homesoft.iso;
+package com.homesoft.iso.listener;
+
+import com.homesoft.iso.BoxTypes;
+import com.homesoft.iso.ParseListener;
+import com.homesoft.iso.TypedParseListener;
 
 /**
  * Flattens out the ilst tag
  * input ilst{someTag{data{value}, ...}
  * output ilst{someTag{value}, ...}
  */
-public class IListListener implements ParseListener {
+public class IListListener implements TypedParseListener {
     private final ParseListener delegate;
 
     private boolean inIList;
@@ -55,5 +59,10 @@ public class IListListener implements ParseListener {
     @Override
     public boolean isCancelled() {
         return delegate.isCancelled();
+    }
+
+    @Override
+    public int getType() {
+        return BoxTypes.TYPE_ilst;
     }
 }
