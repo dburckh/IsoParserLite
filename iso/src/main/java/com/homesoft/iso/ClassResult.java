@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * The convention for this would be set<i>SimpleClassName</i>(...)
  */
 @Documented
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ClassResult {
     /**

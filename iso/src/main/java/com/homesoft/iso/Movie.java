@@ -8,6 +8,7 @@ import com.homesoft.iso.box.Av1DecoderConfigBox;
 import com.homesoft.iso.box.AvcDecoderConfigBox;
 import com.homesoft.iso.box.Data;
 import com.homesoft.iso.box.DataBox;
+import com.homesoft.iso.box.DecoderConfigDescriptor;
 import com.homesoft.iso.box.ESDescriptorBox;
 import com.homesoft.iso.box.FileTypeBox;
 import com.homesoft.iso.box.BaseContainerBox;
@@ -26,6 +27,7 @@ import com.homesoft.iso.box.TrackHeader;
 import com.homesoft.iso.box.TrackHeaderBox;
 import com.homesoft.iso.box.VisualSampleEntry;
 import com.homesoft.iso.box.VisualSampleEntryBox;
+import com.homesoft.iso.listener.CompositeListener;
 import com.homesoft.iso.listener.HierarchyListener;
 import com.homesoft.iso.listener.IListListener;
 import com.homesoft.iso.listener.AnnotationListener;
@@ -121,9 +123,9 @@ public class Movie implements BoxTypes {
     public static void main(String[] args) {
         final String path;
         if (args.length == 0) {
-            path = "C:\\Users\\dburc\\Pictures\\heic\\PXL_20230922_013304243.TS.mp4";
+            //path = "C:\\Users\\dburc\\Pictures\\heic\\PXL_20230922_013304243.TS.mp4";
             //path = "C:\\Users\\dburc\\Pictures\\heic\\01 We Are Never Ever Getting Back Together.m4a";
-            //path = "C:\\\\Users\\\\dburc\\\\Pictures\\\\heic\\\\05 I Am A Man Of Constant Sorrow.m4a";
+            path = "C:\\\\Users\\\\dburc\\\\Pictures\\\\heic\\\\05 I Am A Man Of Constant Sorrow.m4a";
         } else {
             path = args[0];
         }
@@ -138,10 +140,11 @@ public class Movie implements BoxTypes {
 
     public static IsoParser<Movie> getParser() {
         final AnnotationListener annotationListener = new AnnotationListener();
-        final ParseListener parseListener = new IListListener(annotationListener);
+        final CompositeListener compositeListener = new CompositeListener(annotationListener);
         final Work work = new Work(annotationListener);
         annotationListener.add(work);
-        return new IsoParser<Movie>(ROOT_CONTAINER, parseListener) {
+        compositeListener.add(new IListListener(annotationListener));
+        return new IsoParser<Movie>(ROOT_CONTAINER, compositeListener) {
             @Override
             public Movie parse(@NonNull StreamReader streamReader) throws IOException {
                 parseImpl(streamReader);
@@ -164,56 +167,43 @@ public class Movie implements BoxTypes {
 
     }
 
-    private static class Work {
+    private static class TrackInfo {
+        final TrackHeader trackHeader;
+
+        public TrackInfo(@NonNull TrackHeader trackHeader) {
+            this.trackHeader = trackHeader;
+        }
+        @TypeResult(BoxTypes.TYPE_hdlr)
+        Integer handler;
+        @ClassResult({VisualSampleEntry.class, AudioSampleEntry.class})
+        SampleEntry sampleEntry;
+
+        @ClassResult
+        DecoderConfigDescriptor decoderConfigDescriptor;
+    }
+    public static class Work {
         private final AnnotationListener annotationListener;
         Work(AnnotationListener annotationListener) {
             this.annotationListener = annotationListener;
         }
-        private Header movieHeader;
+        @TypeResult(BoxTypes.TYPE_mvhd)
+        Header movieHeader;
 
-        private GPSCoordinates gpsCoordinates;
-
-        private boolean cancelled;
+        @ClassResult
+        GPSCoordinates gpsCoordinates;
 
         private ArrayList<TrackInfo> trackList = new ArrayList<>();
 
         private HashMap<Integer, Object> iListMap = new HashMap<>();
 
-        @TypeResult(BoxTypes.TYPE_mvhd)
-        public void setMovieHeader(Header mediaHeader) {
-            this.movieHeader = mediaHeader;
-        }
-
-        @ClassResult
-        public void setGpsCoordinates(GPSCoordinates gpsCoordinates) {
-            this.gpsCoordinates = gpsCoordinates;
-        }
+        @TypeResult(BoxTypes.TYPE_Anam)
+        Data name;
 
         @ClassResult
         public void setTrackHeader(TrackHeader trackHeader) {
             final TrackInfo trackInfo = new TrackInfo(trackHeader);
             trackList.add(trackInfo);
             annotationListener.add(trackInfo);
-        }
-
-        private static class TrackInfo {
-            final TrackHeader trackHeader;
-
-            public TrackInfo(@NonNull TrackHeader trackHeader) {
-                this.trackHeader = trackHeader;
-            }
-            Integer handler;
-            SampleEntry sampleEntry;
-
-            @TypeResult(BoxTypes.TYPE_hdlr)
-            public void setHandler(Integer handler) {
-                this.handler = handler;
-            }
-
-            @ClassResult({VisualSampleEntry.class, AudioSampleEntry.class})
-            public void setSampleEntry(SampleEntry sampleEntry) {
-                this.sampleEntry = sampleEntry;
-            }
         }
     }
 }

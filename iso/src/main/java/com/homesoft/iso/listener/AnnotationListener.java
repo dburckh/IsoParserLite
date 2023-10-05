@@ -11,7 +11,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Process {@link TypeResult} and {@link ClassResult} annotations
@@ -44,6 +48,14 @@ public class AnnotationListener implements ParseListener {
             final TypeResult typeResult = field.getAnnotation(TypeResult.class);
             if (typeResult != null) {
                 list.add(new FieldInfo(typeResult.value(), object, field));
+            } else {
+                final ClassResult classResult = field.getAnnotation(ClassResult.class);
+                if (classResult != null) {
+                    list.add(new FieldInfo(field.getType(), object, field));
+                    for (final Class<?> c : classResult.value()) {
+                        list.add(new FieldInfo(c, object, field));
+                    }
+                }
             }
         }
         return list;
@@ -76,17 +88,21 @@ public class AnnotationListener implements ParseListener {
         return true;
     }
 
-    public boolean remove(@NonNull final Object object) {
-        final ArrayList<AnnotationInfo> list = getAnnotationInfoList(object);
-        boolean modified = false;
-        for (AnnotationInfo annotationInfo : list) {
-            if (annotationInfo.key instanceof Integer) {
-                modified |= typeMap.remove(annotationInfo.key) != null;
-            } else if (annotationInfo.key instanceof Class<?>) {
-                modified |= classMap.remove((Class<?>) annotationInfo.key) != null;
+    private boolean removeObject(Collection<AnnotationInfo> set, Object object) {
+        boolean removed = false;
+        final Iterator<AnnotationInfo> it = set.iterator();
+        while (it.hasNext()) {
+            if (it.next().object == object) {
+                it.remove();
+                removed = true;
             }
         }
-        return modified;
+        return removed;
+    }
+
+    public boolean remove(@NonNull final Object object) {
+        // Intentionally NOT short circuited or
+        return removeObject(typeMap.values(), object) | removeObject(classMap.values(), object);
     }
 
     @Override
@@ -159,7 +175,13 @@ public class AnnotationListener implements ParseListener {
                 method.invoke(object, value);
             } catch (InvocationTargetException | IllegalAccessException e) {
                 // Intentionally blank
+                Logger.getLogger(AnnotationListener.class.getSimpleName()).log(Level.SEVERE, "set()", e);
             }
+        }
+
+        @Override
+        public String toString() {
+            return object.getClass().getSimpleName()+'.'+method.getName()+"()";
         }
     }
 
@@ -169,7 +191,10 @@ public class AnnotationListener implements ParseListener {
             super(key, object);
             this.field = field;
         }
-
+        FieldInfo(@NonNull Class<?> key, @NonNull Object object, @NonNull Field field) {
+            super(key, object);
+            this.field = field;
+        }
         @Override
         public void set(Object value) {
             try {
@@ -180,6 +205,10 @@ public class AnnotationListener implements ParseListener {
             } catch (IllegalAccessException e) {
                 // Intentionally blank
             }
+        }
+        @Override
+        public String toString() {
+            return object.getClass().getSimpleName()+'.'+field.getName();
         }
     }
 }

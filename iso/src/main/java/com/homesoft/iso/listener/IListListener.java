@@ -5,7 +5,8 @@ import com.homesoft.iso.ParseListener;
 import com.homesoft.iso.TypedParseListener;
 
 /**
- * Flattens out the ilst tag
+ * When used with a CompositeListener this flattens out the ilst container
+ * This allows the ilst subtag values to be directly set by an AnnotationListener
  * input ilst{someTag{data{value}, ...}
  * output ilst{someTag{value}, ...}
  */

@@ -17,6 +17,10 @@ import androidx.annotation.Nullable;
  * }
  */
 public class DecoderConfigDescriptor {
+    // https://www.streamcoders.com/products/msdoc/html/T_StreamCoders_Container_MP4_ObjectTypeId.htm
+    public static final int OBJECT_TYPE_AAC = 64;
+    public static final int OBJECT_TYPE_MP3 = 107;
+
     private final int objectTypeIndication;
     private final int streamType;
     //upStream
