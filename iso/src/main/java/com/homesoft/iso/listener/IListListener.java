@@ -13,8 +13,6 @@ import com.homesoft.iso.TypedParseListener;
 public class IListListener implements TypedParseListener {
     private final ParseListener delegate;
 
-    private boolean inIList;
-
     private int lastType;
 
     public IListListener(ParseListener listener) {
@@ -23,38 +21,19 @@ public class IListListener implements TypedParseListener {
 
     @Override
     public void onContainerStart(int type, Object result) {
-        if (inIList) {
-            lastType = type;
-            return;
-        } else {
-            if (type == BoxTypes.TYPE_ilst) {
-                inIList = true;
-            }
-        }
-        delegate.onContainerStart(type, result);
+        lastType = type;
     }
 
     @Override
     public void onParsed(int type, Object result) {
-        if (inIList) {
-            if (type == BoxTypes.TYPE_data) {
-                delegate.onParsed(lastType, result);
-            }
-            return;
+        if (type == BoxTypes.TYPE_data) {
+            delegate.onParsed(lastType, result);
         }
-        delegate.onParsed(type, result);
     }
 
     @Override
     public void onContainerEnd(int type) {
-        if (inIList) {
-            if (type == BoxTypes.TYPE_ilst) {
-                inIList = false;
-            } else {
-                return;
-            }
-        }
-        delegate.onContainerEnd(type);
+        // Intentionally blank
     }
 
     @Override

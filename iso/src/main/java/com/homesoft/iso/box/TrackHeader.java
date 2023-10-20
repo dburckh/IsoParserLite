@@ -30,6 +30,10 @@ public class TrackHeader extends Header {
         return super.getDuration();
     }
 
+    public int getTrackId() {
+        return trackId;
+    }
+
     /**
      * The final display width.
      */

@@ -11,8 +11,8 @@ public class VisualSampleEntryBox extends SampleEntryBox {
     private static final int SKIP1 =2 + // pre_defined = 0
                                     2 + // reserved
                                     4 * 3; //pre_defined = 0
-    private static final int SKIP2 =4 + // horizresolution
-                                    4 + // vertresolution
+    private static final int SKIP2 =4 + // horizresolution - usually 72 dpi
+                                    4 + // vertresolution - usually 72 dpi
                                     4 + // reserved
                                     2 + // frame_count = 1
                                     32+ // compressorname

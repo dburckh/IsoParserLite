@@ -23,7 +23,7 @@ public interface BoxTypes {
 
     int TYPE_esds = 0x65736473; //moov->trak->mdia->minf->stbl->stsd->mp4a->esds
     int TYPE_udta = 0x75647461; //moov->udta
-    int TYPE_ilst = 0x696C7374; //moov->udta->ilst
+    int TYPE_ilst = 0x696C7374; //moov->meta->udta->ilst
 
     //-------------------------------------------------------------------------
     // iTunes metadata item list

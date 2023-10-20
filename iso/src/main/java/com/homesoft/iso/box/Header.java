@@ -20,10 +20,16 @@ public class Header {
         this.duration = duration;
     }
 
+    /**
+     * Creation time (millis since the EPOCH)
+     */
     public long getCreationTime() {
         return Movie.toJavaTime(creationTime);
     }
 
+    /**
+     * Modification time (millis since the EPOCH)
+     */
     public long getModificationTime() {
         return Movie.toJavaTime(modificationTime);
     }
@@ -32,6 +38,9 @@ public class Header {
         return timescale;
     }
 
+    /**
+     * Get the duration in millis
+     */
     public long getDuration() {
         return TimeUnit.SECONDS.toMillis(duration) / StreamUtil.getUInt(timescale);
     }

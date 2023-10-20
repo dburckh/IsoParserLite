@@ -1,8 +1,8 @@
 package com.homesoft.iso;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import com.homesoft.iso.box.AudioSampleEntry;
 import com.homesoft.iso.box.AudioSampleEntryBox;
 import com.homesoft.iso.box.Av1DecoderConfigBox;
 import com.homesoft.iso.box.AvcDecoderConfigBox;
@@ -22,22 +22,22 @@ import com.homesoft.iso.box.MovieHeaderBox;
 import com.homesoft.iso.box.PixelAspectRatioBox;
 import com.homesoft.iso.box.RootContainerBox;
 import com.homesoft.iso.box.SampleDescriptionBox;
-import com.homesoft.iso.box.SampleEntry;
-import com.homesoft.iso.box.TrackHeader;
+import com.homesoft.iso.box.SetIndex;
 import com.homesoft.iso.box.TrackHeaderBox;
-import com.homesoft.iso.box.VisualSampleEntry;
 import com.homesoft.iso.box.VisualSampleEntryBox;
 import com.homesoft.iso.listener.CompositeListener;
 import com.homesoft.iso.listener.HierarchyListener;
 import com.homesoft.iso.listener.IListListener;
 import com.homesoft.iso.listener.AnnotationListener;
+import com.homesoft.iso.listener.TrackListener;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.GregorianCalendar;
-import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -123,9 +123,11 @@ public class Movie implements BoxTypes {
     public static void main(String[] args) {
         final String path;
         if (args.length == 0) {
+            path="./iso/src/test/resources/song.m4a";
+            System.out.println(new File(path).getAbsolutePath());
             //path = "C:\\Users\\dburc\\Pictures\\heic\\PXL_20230922_013304243.TS.mp4";
             //path = "C:\\Users\\dburc\\Pictures\\heic\\01 We Are Never Ever Getting Back Together.m4a";
-            path = "C:\\\\Users\\\\dburc\\\\Pictures\\\\heic\\\\05 I Am A Man Of Constant Sorrow.m4a";
+            //path = "C:\\\\Users\\\\dburc\\\\Pictures\\\\heic\\\\05 I Am A Man Of Constant Sorrow.m4a";
         } else {
             path = args[0];
         }
@@ -144,6 +146,7 @@ public class Movie implements BoxTypes {
         final Work work = new Work(annotationListener);
         annotationListener.add(work);
         compositeListener.add(new IListListener(annotationListener));
+        compositeListener.add(new TrackListener(annotationListener));
         return new IsoParser<Movie>(ROOT_CONTAINER, compositeListener) {
             @Override
             public Movie parse(@NonNull StreamReader streamReader) throws IOException {
@@ -157,34 +160,100 @@ public class Movie implements BoxTypes {
         System.out.println(new StringParser(ROOT_CONTAINER, new HierarchyListener(BoxTypes.TYPE_moov)).parse(file));
     }
 
-    private Header movieHeader;
+    static String getString(Data data) {
+        if (data == null) {
+            return null;
+        }
+        if (data.dataType == Data.UTF_8) {
+            return (String) data.data;
+        }
+        return null;
+    }
+
+    private final Work work;
+    private final List<TrackListener.Track> trackList;
 
     public Movie(Work work) {
-        // TODO: Organize the media and tracks into something useful.
+        this.work = work;
+        this.trackList = Collections.unmodifiableList(work.trackList);
     }
 
-    static class Track {
-
-    }
-
-    private static class TrackInfo {
-        final TrackHeader trackHeader;
-
-        public TrackInfo(@NonNull TrackHeader trackHeader) {
-            this.trackHeader = trackHeader;
+    @Nullable
+    public MediaMeta getMediaMeta() {
+        final MediaMeta mediaMeta = work.mediaMeta;
+        if (!mediaMeta.isEmpty()) {
+            return mediaMeta;
         }
-        @TypeResult(BoxTypes.TYPE_hdlr)
-        Integer handler;
-        @ClassResult({VisualSampleEntry.class, AudioSampleEntry.class})
-        SampleEntry sampleEntry;
+        return null;
+    }
 
-        @ClassResult
-        DecoderConfigDescriptor decoderConfigDescriptor;
+    public List<TrackListener.Track> getTrackList() {
+        return trackList;
+    }
+
+    /**
+     * Music or Video metadata
+     */
+    public static class MediaMeta {
+        @Nullable
+        public String getName() {
+            return getString(name);
+        }
+        @Nullable
+        public Integer getTrack() {
+            return trackSet == null ? null : trackSet.index;
+        }
+        @Nullable
+        public Integer getTracks() {
+            return trackSet == null ? null : trackSet.size;
+        }
+
+        @Nullable
+        public String getAlbum() {
+            return getString(album);
+        }
+
+        @Nullable
+        public String getAlbumArtist() {
+            return getString(albumArist);
+        }
+
+        @Nullable
+        public Integer getYear() {
+            String yearString = getString(year);
+            if (yearString == null) {
+                return null;
+            }
+            try {
+                return Integer.parseInt(yearString);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+
+        @TypeResult(BoxTypes.TYPE_Anam)
+        Data name;
+
+        @TypeResult(BoxTypes.TYPE_trkn)
+        SetIndex trackSet;
+
+        @TypeResult(BoxTypes.TYPE_Aalb)
+        Data album;
+
+        @TypeResult(BoxTypes.TYPE_AART)
+        Data albumArist;
+
+        @TypeResult(BoxTypes.TYPE_Aday)
+        Data year;
+
+        boolean isEmpty() {
+            return name == null && trackSet == null && album == null && albumArist == null && year == null;
+        }
     }
     public static class Work {
-        private final AnnotationListener annotationListener;
+        final MediaMeta mediaMeta = new MediaMeta();
         Work(AnnotationListener annotationListener) {
-            this.annotationListener = annotationListener;
+            annotationListener.add(mediaMeta);
         }
         @TypeResult(BoxTypes.TYPE_mvhd)
         Header movieHeader;
@@ -192,18 +261,11 @@ public class Movie implements BoxTypes {
         @ClassResult
         GPSCoordinates gpsCoordinates;
 
-        private ArrayList<TrackInfo> trackList = new ArrayList<>();
+        private ArrayList<TrackListener.Track> trackList = new ArrayList<>();
 
-        private HashMap<Integer, Object> iListMap = new HashMap<>();
-
-        @TypeResult(BoxTypes.TYPE_Anam)
-        Data name;
-
-        @ClassResult
-        public void setTrackHeader(TrackHeader trackHeader) {
-            final TrackInfo trackInfo = new TrackInfo(trackHeader);
-            trackList.add(trackInfo);
-            annotationListener.add(trackInfo);
+        @ClassResult({TrackListener.VideoTrack.class, TrackListener.AudioTrack.class})
+        public void setTrackHeader(TrackListener.Track track) {
+            trackList.add(track);
         }
     }
 }
