@@ -114,6 +114,6 @@ public interface BoxTypes {
     int TYPE_av1C = 0x61763143; // meta->irpr->ipco->av1C - AV1 Codec Config
     int TYPE_ispe = 0x69737065; // meta->irpr->ipco->ispe - Image Spacial Extents (dimensions)
 
-    int TYPE__xyz = 0xA978797A; // udta->@xyz or udta->meta->ilst->@xyz
+    int TYPE_Axyz = 0xA978797A; // udta->@xyz or udta->meta->ilst->@xyz
 
 }

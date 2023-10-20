@@ -1,16 +1,13 @@
 package com.homesoft.iso.box;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.homesoft.iso.Box;
 import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.BoxTypes;
 import com.homesoft.iso.StreamReader;
-import com.homesoft.iso.StreamUtil;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  * Can occur directly under udta (Apple) or
@@ -34,7 +31,7 @@ public class GPSCoordinatesBox implements Box {
     @Override
     public GPSCoordinates read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
         int skipBytes;
-        if (boxHeader.type == BoxTypes.TYPE__xyz) {
+        if (boxHeader.type == BoxTypes.TYPE_Axyz) {
             // skip the unknown header
             skipBytes = 4;
         } else if (boxHeader.type == BoxTypes.TYPE_data) {

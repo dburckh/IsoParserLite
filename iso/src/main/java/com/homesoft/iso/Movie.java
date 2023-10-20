@@ -8,7 +8,6 @@ import com.homesoft.iso.box.Av1DecoderConfigBox;
 import com.homesoft.iso.box.AvcDecoderConfigBox;
 import com.homesoft.iso.box.Data;
 import com.homesoft.iso.box.DataBox;
-import com.homesoft.iso.box.DecoderConfigDescriptor;
 import com.homesoft.iso.box.ESDescriptorBox;
 import com.homesoft.iso.box.FileTypeBox;
 import com.homesoft.iso.box.BaseContainerBox;
@@ -98,12 +97,12 @@ public class Movie implements BoxTypes {
                                                 .addParser(BaseContainerBox.TYPE_DEFAULT, new BaseContainerBox()
                                                         .addParser(new DataBox())
                                                 )
-                                                .addParser(TYPE__xyz, new BaseContainerBox()
+                                                .addParser(TYPE_Axyz, new BaseContainerBox()
                                                         .addParser(TYPE_data, new GPSCoordinatesBox())
                                                 )
                                         )
                                 )
-                                .addParser(TYPE__xyz, new GPSCoordinatesBox())
+                                .addParser(TYPE_Axyz, new GPSCoordinatesBox())
                         )
                 );
 
@@ -187,6 +186,27 @@ public class Movie implements BoxTypes {
         return null;
     }
 
+    public long getCreationTime() {
+        return work.movieHeader.getCreationTime();
+    }
+
+    public long getDuration() {
+        return work.movieHeader.getDuration();
+    }
+
+    @Nullable
+    public GPSCoordinates getGpsCoordinates() {
+        if (work.gpsCoordinates != null) {
+            return work.gpsCoordinates;
+        } else {
+            MediaMeta mediaMeta = getMediaMeta();
+            if (mediaMeta != null) {
+                return mediaMeta.getGpsCoordinates();
+            }
+        }
+        return null;
+    }
+
     public List<TrackListener.Track> getTrackList() {
         return trackList;
     }
@@ -219,6 +239,11 @@ public class Movie implements BoxTypes {
         }
 
         @Nullable
+        public GPSCoordinates getGpsCoordinates() {
+            return gpsCoordinates;
+        }
+
+        @Nullable
         public Integer getYear() {
             String yearString = getString(year);
             if (yearString == null) {
@@ -246,8 +271,12 @@ public class Movie implements BoxTypes {
         @TypeResult(BoxTypes.TYPE_Aday)
         Data year;
 
+        @TypeResult(BoxTypes.TYPE_Axyz)
+        GPSCoordinates gpsCoordinates;
+
         boolean isEmpty() {
-            return name == null && trackSet == null && album == null && albumArist == null && year == null;
+            return name == null && trackSet == null && album == null && albumArist == null &&
+                    year == null && gpsCoordinates == null;
         }
     }
     public static class Work {
@@ -261,7 +290,7 @@ public class Movie implements BoxTypes {
         @ClassResult
         GPSCoordinates gpsCoordinates;
 
-        private ArrayList<TrackListener.Track> trackList = new ArrayList<>();
+        private final ArrayList<TrackListener.Track> trackList = new ArrayList<>();
 
         @ClassResult({TrackListener.VideoTrack.class, TrackListener.AudioTrack.class})
         public void setTrackHeader(TrackListener.Track track) {

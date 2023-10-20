@@ -12,6 +12,10 @@ import com.homesoft.iso.box.HandlerBox;
 import com.homesoft.iso.box.PixelAspectRatio;
 import com.homesoft.iso.box.SampleEntry;
 import com.homesoft.iso.box.TrackHeader;
+import com.homesoft.iso.box.VisualSampleEntry;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 public class TrackListener implements TypedParseListener {
     public static final int TYPE_TRACK = BoxTypes.TYPE_trak & Integer.MIN_VALUE;
@@ -19,16 +23,17 @@ public class TrackListener implements TypedParseListener {
     private final ParseListener parseListener;
 
     private transient TrackHeader trackHeader;
-    private Integer handler;
+    private transient Integer handler;
 
-    protected SampleEntry sampleEntry;
+    private transient Integer fourCC;
+    protected transient SampleEntry sampleEntry;
 
-    private DecoderConfigDescriptor decoderConfigDescriptor;
+    private transient DecoderConfigDescriptor decoderConfigDescriptor;
 
     /**
      * Only valid for video tracks
      */
-    protected PixelAspectRatio pixelAspectRatio;
+    protected transient PixelAspectRatio pixelAspectRatio;
 
     public TrackListener(@NonNull ParseListener parseListener) {
         this.parseListener = parseListener;
@@ -37,6 +42,7 @@ public class TrackListener implements TypedParseListener {
     @Override
     public void onContainerStart(int type, Object result) {
         if (result instanceof SampleEntry) {
+            fourCC = type;
             sampleEntry = (SampleEntry) result;
         }
     }
@@ -70,6 +76,20 @@ public class TrackListener implements TypedParseListener {
                 track = null;
             }
             parseListener.onParsed(TYPE_TRACK, track);
+            clear();
+        }
+    }
+
+    private void clear() {
+        Field[] fields = getClass().getDeclaredFields();
+        for (Field field : fields) {
+            if (Modifier.isTransient(field.getModifiers())) {
+                try {
+                    field.set(this, null);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 
@@ -87,6 +107,8 @@ public class TrackListener implements TypedParseListener {
         final TrackHeader trackHeader;
         private final Integer handler;
 
+        private final Integer fourCC;
+
         protected final SampleEntry sampleEntry;
 
         private final DecoderConfigDescriptor decoderConfigDescriptor;
@@ -94,6 +116,7 @@ public class TrackListener implements TypedParseListener {
         Track(@NonNull TrackHeader trackHeader, @NonNull Integer handler, TrackListener trackListener) {
             this.trackHeader = trackHeader;
             this.handler = handler;
+            this.fourCC = trackListener.fourCC;
             this.sampleEntry = trackListener.sampleEntry;
             this.decoderConfigDescriptor = trackListener.decoderConfigDescriptor;
         }
@@ -109,6 +132,11 @@ public class TrackListener implements TypedParseListener {
         @Nullable
         public DecoderConfigDescriptor getDecoderConfigDescriptor() {
             return decoderConfigDescriptor;
+        }
+
+        @Nullable
+        public Integer getFourCC() {
+            return fourCC;
         }
     }
 
@@ -132,6 +160,14 @@ public class TrackListener implements TypedParseListener {
         }
 
         @Nullable
+        public VisualSampleEntry getVisualSampleEntry() {
+            if (sampleEntry instanceof VisualSampleEntry) {
+                return (VisualSampleEntry) sampleEntry;
+            }
+            return null;
+        }
+
+        @Nullable
         public PixelAspectRatio getPixelAspectRatio() {
             return pixelAspectRatio;
         }
@@ -142,6 +178,7 @@ public class TrackListener implements TypedParseListener {
             super(trackHeader, HandlerBox.SOUND, trackListener);
         }
 
+        @Nullable
         public AudioSampleEntry getAudioSampleEntry() {
             if (sampleEntry instanceof AudioSampleEntry) {
                 return (AudioSampleEntry) sampleEntry;
