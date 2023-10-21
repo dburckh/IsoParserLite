@@ -48,7 +48,7 @@ public class BoxHeader {
         }
     }
 
-    BoxHeader(Number size, int type) {
+    public BoxHeader(Number size, int type) {
         this.size = size;
         this.type = type;
     }

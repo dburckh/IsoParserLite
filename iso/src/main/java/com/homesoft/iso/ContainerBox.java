@@ -7,6 +7,6 @@ public interface ContainerBox extends Box {
      * Get the {@link Box} for the passed type
      */
     @Nullable
-    Box getBox(int type);
+    Box getBox(BoxHeader boxHeader);
 
 }

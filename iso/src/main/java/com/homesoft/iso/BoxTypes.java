@@ -22,6 +22,8 @@ public interface BoxTypes {
     int TYPE_avcC = 0x61766343; //moov->trak->mdia->minf->stbl->stsd->avc1-> avcC - AVC Codec Config
 
     int TYPE_esds = 0x65736473; //moov->trak->mdia->minf->stbl->stsd->mp4a->esds
+    int TYPE_stco = 0x7374636F; //moov->trak->mdia->minf->stbl->stco
+    int TYPE_co64 = 0x636F3634; //moov->trak->mdia->minf->stbl->co64
     int TYPE_udta = 0x75647461; //moov->udta
     int TYPE_ilst = 0x696C7374; //moov->meta->udta->ilst
 

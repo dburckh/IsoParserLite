@@ -18,8 +18,12 @@ public class Extent {
         this.size = size;
     }
 
+    protected String toStringPrefix() {
+        return getClass().getSimpleName()+ "{offset="+offset+", size=" + size;
+    }
+
     @Override
     public String toString() {
-        return "Extent{offset="+offset+", size=" + size+"}";
+        return toStringPrefix() + '}';
     }
 }

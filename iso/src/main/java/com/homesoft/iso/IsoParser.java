@@ -58,7 +58,7 @@ public abstract class IsoParser<T> {
                     break;
                 }
                 final int type = boxHeader.type;
-                final Box box = containerBox.getBox(type);
+                final Box box = containerBox.getBox(boxHeader);
                 if (box != null) {
                     final Object result = box.read(boxHeader, streamReader, box.isFullBox() ? streamReader.getInt() :  0);
                     dependencyManager.updateDependencies(box, result);

@@ -8,8 +8,10 @@ import com.homesoft.iso.BoxTypes;
 import com.homesoft.iso.ContainerBox;
 import com.homesoft.iso.StreamReader;
 import com.homesoft.iso.TypedBox;
+import com.homesoft.iso.UUIDBoxHeader;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 
 /**
@@ -20,7 +22,10 @@ public class BaseContainerBox implements ContainerBox {
      * Wildcard match for boxes
      */
     public static final int TYPE_DEFAULT = BoxTypes.TYPE_NA;
-    final HashMap<Integer, Box> boxMap = new HashMap<>();
+    /**
+     * Contains keys of types (Integer) or uuid (ByteBuffer)
+     */
+    final HashMap<Object, Box> boxMap = new HashMap<>();
 
     private final boolean fullBox;
     public BaseContainerBox() {
@@ -40,8 +45,20 @@ public class BaseContainerBox implements ContainerBox {
         return addParser(typedBox.getType(), typedBox);
     }
 
+    /**
+     * Add a sub Box to this container keyed on Type
+     * @return this instance
+     */
     public BaseContainerBox addParser(int type, Box parser) {
         boxMap.put(type, parser);
+        return this;
+    }
+    /**
+     * Add a sub Box to this container keyed on UUID
+     * @return this instance
+     */
+    public BaseContainerBox addParser(byte[] uuid, Box parser) {
+        boxMap.put(ByteBuffer.wrap(uuid), parser);
         return this;
     }
     @Nullable
@@ -52,8 +69,9 @@ public class BaseContainerBox implements ContainerBox {
 
     @Nullable
     @Override
-    public Box getBox(int type) {
-        Box box = boxMap.get(type);
+    public Box getBox(BoxHeader boxHeader) {
+        Box box = boxHeader instanceof UUIDBoxHeader ?
+                boxMap.get(((UUIDBoxHeader) boxHeader).uuid) : boxMap.get(boxHeader.type);
         if (box == null) {
             box = boxMap.get(TYPE_DEFAULT);
         }

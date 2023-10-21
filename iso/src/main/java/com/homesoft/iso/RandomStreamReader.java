@@ -46,7 +46,7 @@ public abstract class RandomStreamReader implements StreamReader {
                 // set limit to prevent BufferOverflowException
                 final int inLimit = byteBuffer.limit();
                 try {
-                    byteBuffer.position(byteBuffer.position() + readRemaining);
+                    byteBuffer.limit(byteBuffer.position() + readRemaining);
                     readBuffer.put(byteBuffer);
                 } finally {
                     byteBuffer.limit(inLimit);

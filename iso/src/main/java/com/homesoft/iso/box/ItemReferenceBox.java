@@ -40,7 +40,7 @@ public class ItemReferenceBox implements ContainerBox {
     }
 
     @Override
-    public Box getBox(int type) {
+    public Box getBox(BoxHeader boxHeader) {
         return box;
     }
 }

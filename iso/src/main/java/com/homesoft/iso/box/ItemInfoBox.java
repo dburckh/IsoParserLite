@@ -24,8 +24,8 @@ public class ItemInfoBox implements ContainerBox {
     }
 
     @Override
-    public Box getBox(int type) {
-        if (type == BoxTypes.TYPE_infe) {
+    public Box getBox(BoxHeader boxHeader) {
+        if (boxHeader.type == BoxTypes.TYPE_infe) {
             return ITEM_INFO_ENTRY_PARSER;
         }
         return null;

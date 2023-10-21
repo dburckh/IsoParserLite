@@ -30,12 +30,12 @@ public class SampleDescriptionBox extends BaseContainerBox implements Dependency
 
     @Nullable
     @Override
-    public Box getBox(int type) {
+    public Box getBox(BoxHeader boxHeader) {
         // Try get a specific parser first
-        Box box = super.getBox(type);
+        Box box = super.getBox(boxHeader);
         if (box == null && handler != null) {
             // If we fail, try to get one by handler
-            box = super.getBox(handler);
+            box = super.getBox(new BoxHeader(boxHeader.getSize(), handler));
         }
         return box;
     }
