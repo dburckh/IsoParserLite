@@ -3,16 +3,20 @@ package com.homesoft.iso;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.homesoft.iso.box.IntArray;
+import com.homesoft.iso.box.LongArray;
+
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
 public class StreamUtil {
     public static final String[] EMPTY_STRING_ARRAY = new String[0];
-    private static final long UINT_MASK = 0xffffffffL;
+    public static final long UINT_MASK = 0xffffffffL;
     public static final int USHORT_MASK = 0xffff;
     private static final int UBYTE_MASK = 0xff;
     public static int getInt(ByteBuffer byteBuffer, int size) {
@@ -168,6 +172,20 @@ public class StreamUtil {
             }
         }
         return null;
+    }
+
+    /**
+     * Generic helper for toString() of results
+     */
+    public static void append(StringBuilder sb, Object result) {
+        sb.append('=');
+        if (result instanceof IntArray) {
+            sb.append(Arrays.toString(((IntArray) result).toInts()));
+        } else if (result instanceof LongArray) {
+            sb.append(Arrays.toString(((LongArray) result).getLongs()));
+        } else {
+            sb.append(result);
+        }
     }
 
     /**

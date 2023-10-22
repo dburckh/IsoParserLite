@@ -23,6 +23,8 @@ public interface BoxTypes {
 
     int TYPE_esds = 0x65736473; //moov->trak->mdia->minf->stbl->stsd->mp4a->esds
     int TYPE_stco = 0x7374636F; //moov->trak->mdia->minf->stbl->stco
+    int TYPE_stsz = 0x7374737A; //moov->trak->mdia->minf->stbl->stsz
+    int TYPE_stz2 = 0x73747A32; //moov->trak->mdia->minf->stbl->stz2
     int TYPE_co64 = 0x636F3634; //moov->trak->mdia->minf->stbl->co64
     int TYPE_udta = 0x75647461; //moov->udta
     int TYPE_ilst = 0x696C7374; //moov->meta->udta->ilst

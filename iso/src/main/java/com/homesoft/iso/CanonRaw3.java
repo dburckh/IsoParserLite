@@ -1,25 +1,40 @@
 package com.homesoft.iso;
 
+import androidx.annotation.NonNull;
+
 import com.homesoft.iso.box.BaseContainerBox;
+import com.homesoft.iso.box.CompactSampleSizeBox;
 import com.homesoft.iso.box.ExtentBox;
 import com.homesoft.iso.box.FileTypeBox;
 import com.homesoft.iso.box.HandlerBox;
+import com.homesoft.iso.box.Header;
 import com.homesoft.iso.box.IntArrayBox;
 import com.homesoft.iso.box.LongArrayBox;
 import com.homesoft.iso.box.MediaHeaderBox;
 import com.homesoft.iso.box.MovieHeaderBox;
 import com.homesoft.iso.box.RootContainerBox;
 import com.homesoft.iso.box.SampleDescriptionBox;
+import com.homesoft.iso.box.SampleSizeBox;
 import com.homesoft.iso.box.StringBox;
 import com.homesoft.iso.box.TrackHeaderBox;
 import com.homesoft.iso.box.UUIDBox;
+import com.homesoft.iso.box.UUIDResult;
+import com.homesoft.iso.box.VisualSampleEntry;
+import com.homesoft.iso.box.cr3.CRawVisualSampleEntry;
 import com.homesoft.iso.box.cr3.CRawVisualSampleEntryBox;
+import com.homesoft.iso.box.cr3.JpegImage;
 import com.homesoft.iso.box.cr3.PreviewBox;
 import com.homesoft.iso.box.cr3.PreviewContainerBox;
 import com.homesoft.iso.box.cr3.ThumbnailBox;
+import com.homesoft.iso.listener.AnnotationListener;
+import com.homesoft.iso.listener.CompositeListener;
 import com.homesoft.iso.listener.HierarchyListener;
+import com.homesoft.iso.listener.TrackListener;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 
 /**
@@ -57,6 +72,8 @@ public class CanonRaw3 implements BoxTypes {
                                                         .addParser(TYPE_stsd, new SampleDescriptionBox(root, handlerBox)
                                                                 .addParser(new CRawVisualSampleEntryBox())
                                                         )
+                                                        .addParser(new SampleSizeBox())
+                                                        .addParser(new CompactSampleSizeBox())
                                                         .addParser(BoxTypes.TYPE_stco, new IntArrayBox(true))
                                                         .addParser(BoxTypes.TYPE_co64, new LongArrayBox(true))
                                                 )
@@ -87,6 +104,94 @@ public class CanonRaw3 implements BoxTypes {
             dump(new File("./iso/src/test/resources/canon.cr3"));
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+    public static IsoParser<CanonRaw3> getParser() {
+        final AnnotationListener annotationListener = new AnnotationListener();
+        final CompositeListener compositeListener = new CompositeListener(annotationListener);
+        final Work work = new Work();
+        annotationListener.add(work);
+        compositeListener.add(new TrackListener(annotationListener));
+        return new IsoParser<CanonRaw3>(ROOT_CONTAINER, compositeListener) {
+            @Override
+            public CanonRaw3 parse(@NonNull StreamReader streamReader) throws IOException {
+                parseImpl(streamReader);
+                return new CanonRaw3(work);
+            }
+        };
+    }
+    private final Work work;
+
+    CanonRaw3(@NonNull Work work) {
+        this.work = work;
+    }
+
+    public JpegImage getThumbnail() {
+        return work.thumbnail;
+    }
+
+    public String getXmp() {
+        return work.xmp;
+    }
+
+    public JpegImage getTrackImage() {
+        for (TrackListener.Track track : work.trackList) {
+            if (track instanceof TrackListener.VideoTrack) {
+                TrackListener.VideoTrack videoTrack = (TrackListener.VideoTrack) track;
+                VisualSampleEntry visualSampleEntry = videoTrack.getVisualSampleEntry();
+                if (visualSampleEntry instanceof CRawVisualSampleEntry) {
+                    CRawVisualSampleEntry cRawVisualSampleEntry = (CRawVisualSampleEntry) visualSampleEntry;
+                    if (cRawVisualSampleEntry.getImageType() == CRawVisualSampleEntry.IMAGE_TYPE_JPEG &&
+                            track.getSampleSizes() != null && track.getChunkOffsets() != null) {
+                        return new JpegImage(cRawVisualSampleEntry.getRawWidth(),
+                                cRawVisualSampleEntry.getRawHeight(),
+                                track.getChunkOffsets().getLong(0),
+                                track.getSampleSizes().getInt(0));
+
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public JpegImage getBestPreview() {
+        JpegImage previewImage = work.preview;
+        JpegImage trackImage = getTrackImage();
+        if (JpegImage.COMPARATOR.compare(previewImage, trackImage) < 0) {
+            return previewImage;
+        } else {
+            return trackImage;
+        }
+    }
+
+    public static class Work {
+        @TypeResult(BoxTypes.TYPE_mvhd)
+        Header movieHeader;
+
+        @TypeResult(ThumbnailBox.TYPE_THMB)
+        JpegImage thumbnail;
+
+        String xmp;
+
+        @TypeResult(PreviewBox.TYPE_PRVW)
+        JpegImage preview;
+
+        private final ArrayList<TrackListener.Track> trackList = new ArrayList<>();
+
+        @ClassResult({TrackListener.VideoTrack.class, TrackListener.AudioTrack.class})
+        public void setTrackHeader(TrackListener.Track track) {
+            trackList.add(track);
+        }
+
+        @TypeResult(BoxTypes.TYPE_uuid)
+        public void setUuidResult(UUIDResult uuidResult) {
+            if (uuidResult == null) {
+                return;
+            }
+            if (uuidResult.getUuid().equals(ByteBuffer.wrap(CanonRaw3.XMP_UUID))) {
+                xmp = (String)uuidResult.result;
+            }
         }
     }
 }

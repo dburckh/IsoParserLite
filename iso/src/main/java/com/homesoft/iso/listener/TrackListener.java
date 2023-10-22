@@ -9,6 +9,8 @@ import com.homesoft.iso.TypedParseListener;
 import com.homesoft.iso.box.AudioSampleEntry;
 import com.homesoft.iso.box.DecoderConfigDescriptor;
 import com.homesoft.iso.box.HandlerBox;
+import com.homesoft.iso.box.IntArray;
+import com.homesoft.iso.box.LongArray;
 import com.homesoft.iso.box.PixelAspectRatio;
 import com.homesoft.iso.box.SampleEntry;
 import com.homesoft.iso.box.TrackHeader;
@@ -27,6 +29,10 @@ public class TrackListener implements TypedParseListener {
 
     private transient Integer fourCC;
     protected transient SampleEntry sampleEntry;
+
+    private transient IntArray sampleSizes;
+
+    private transient LongArray chunkOffsets;
 
     private transient DecoderConfigDescriptor decoderConfigDescriptor;
 
@@ -57,6 +63,17 @@ public class TrackListener implements TypedParseListener {
             decoderConfigDescriptor = (DecoderConfigDescriptor) result;
         } else if (result instanceof PixelAspectRatio) {
             pixelAspectRatio = (PixelAspectRatio) result;
+        } else {
+            switch (type) {
+                case BoxTypes.TYPE_stco:
+                case BoxTypes.TYPE_co64:
+                    chunkOffsets = (LongArray) result;
+                    break;
+                case BoxTypes.TYPE_stsz:
+                case BoxTypes.TYPE_stz2:
+                    sampleSizes = (IntArray) result;
+                    break;
+            }
         }
     }
 
@@ -113,12 +130,18 @@ public class TrackListener implements TypedParseListener {
 
         private final DecoderConfigDescriptor decoderConfigDescriptor;
 
+        private final LongArray chunkOffsets;
+
+        private final IntArray sampleSizes;
+
         Track(@NonNull TrackHeader trackHeader, @NonNull Integer handler, TrackListener trackListener) {
             this.trackHeader = trackHeader;
             this.handler = handler;
             this.fourCC = trackListener.fourCC;
             this.sampleEntry = trackListener.sampleEntry;
             this.decoderConfigDescriptor = trackListener.decoderConfigDescriptor;
+            this.chunkOffsets = trackListener.chunkOffsets;
+            this.sampleSizes = trackListener.sampleSizes;
         }
 
         public long getDuration() {
@@ -137,6 +160,16 @@ public class TrackListener implements TypedParseListener {
         @Nullable
         public Integer getFourCC() {
             return fourCC;
+        }
+
+        @Nullable
+        public LongArray getChunkOffsets() {
+            return chunkOffsets;
+        }
+
+        @Nullable
+        public IntArray getSampleSizes() {
+            return sampleSizes;
         }
     }
 

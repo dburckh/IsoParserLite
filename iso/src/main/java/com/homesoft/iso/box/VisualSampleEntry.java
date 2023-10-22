@@ -20,8 +20,16 @@ public class VisualSampleEntry extends SampleEntry {
         return StreamUtil.getUShort(width);
     }
 
+    public short getRawWidth() {
+        return width;
+    }
+
     public int getHeight() {
         return StreamUtil.getUShort(height);
+    }
+
+    public short getRawHeight() {
+        return height;
     }
 
     @Override

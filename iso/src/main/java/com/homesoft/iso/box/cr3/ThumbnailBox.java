@@ -21,8 +21,8 @@ public class ThumbnailBox implements TypedBox {
         final int version = BoxHeader.getVersion(versionFlags);
         return new JpegImage(streamReader.getShort(),
                 streamReader.getShort(),
-                streamReader.getInt(),
-                version == 1 ? streamReader.position() : streamReader.position() + 4);
+                version == 1 ? streamReader.position() : streamReader.position() + 4,
+                streamReader.getInt());
     }
 
     @Override

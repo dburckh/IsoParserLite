@@ -6,18 +6,13 @@ import com.homesoft.iso.StreamReader;
 
 import java.io.IOException;
 
-public class StringBox implements Box {
-    private final boolean fullBox;
+public class StringBox extends BaseBox {
     public StringBox(boolean fullBox) {
-        this.fullBox = fullBox;
-    }
-    @Override
-    public boolean isFullBox() {
-        return fullBox;
+        super(fullBox);
     }
 
     @Override
-    public StringType read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
-        return new StringType(boxHeader.type, streamReader.getString());
+    public String read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
+        return streamReader.getString();
     }
 }

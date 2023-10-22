@@ -6,6 +6,7 @@ import com.homesoft.iso.BoxHeader;
 import com.homesoft.iso.BoxTypes;
 import com.homesoft.iso.ContainerBox;
 import com.homesoft.iso.ParseListener;
+import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.Type;
 
 import java.util.ArrayDeque;
@@ -117,8 +118,7 @@ public class HierarchyListener implements ParseListener {
         public String toString() {
             final StringBuilder sb = new StringBuilder(BoxHeader.typeToString(type));
             if (result != null) {
-                sb.append('=');
-                sb.append(result);
+                StreamUtil.append(sb, result);
             }
            return sb.toString();
         }

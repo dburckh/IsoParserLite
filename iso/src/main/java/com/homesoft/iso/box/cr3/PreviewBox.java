@@ -20,12 +20,12 @@ public class PreviewBox implements TypedBox {
     @Nullable
     @Override
     public JpegImage read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
+        streamReader.skip(2);
         ByteBuffer byteBuffer = StreamUtil.requireSharedBuffer(0xc, streamReader);
-        byteBuffer.position(2);
         short width = byteBuffer.getShort();
         short height = byteBuffer.getShort();
         byteBuffer.getShort(); // Unknown
-        return new JpegImage(width, height, byteBuffer.getInt(), streamReader.position());
+        return new JpegImage(width, height, streamReader.position(), byteBuffer.getInt());
     }
 
     @Override

@@ -7,7 +7,6 @@ import com.homesoft.iso.StreamReader;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 
 public class IntArrayBox extends BaseBox {
     public IntArrayBox(boolean fullBox) {
@@ -16,10 +15,10 @@ public class IntArrayBox extends BaseBox {
 
     @Nullable
     @Override
-    public IntBuffer read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
+    public IntBufferArray read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
         final int count = streamReader.getInt();
         final ByteBuffer byteBuffer = ByteBuffer.allocate(count * 4);
         streamReader.read(byteBuffer);
-        return byteBuffer.clear().asIntBuffer();
+        return new IntBufferArray(byteBuffer);
     }
 }

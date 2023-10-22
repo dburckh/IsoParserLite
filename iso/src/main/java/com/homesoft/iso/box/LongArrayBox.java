@@ -16,10 +16,10 @@ public class LongArrayBox extends BaseBox {
 
     @Nullable
     @Override
-    public LongBuffer read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
+    public LongArray read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
         final int count = streamReader.getInt();
         final ByteBuffer byteBuffer = ByteBuffer.allocate(count * 8);
         streamReader.read(byteBuffer);
-        return byteBuffer.clear().asLongBuffer();
+        return new BufferLongArray(byteBuffer);
     }
 }
