@@ -5,8 +5,8 @@ import com.homesoft.iso.box.Extent;
 
 import java.util.Comparator;
 
-public class JpegImage extends Extent {
-    public static final Comparator<JpegImage> COMPARATOR = (i0, i1) -> {
+public class ImageExtent extends Extent {
+    public static final Comparator<ImageExtent> COMPARATOR = (i0, i1) -> {
         if (i0 == i1) {
             return 0;
         } else if (i0 == null) {
@@ -20,10 +20,12 @@ public class JpegImage extends Extent {
         }
         return rc;
     };
+    private final short type;
     private final short width;
     private final short height;
-    public JpegImage(short width, short height, long offset, int len) {
-        super(len, offset);
+    public ImageExtent(short type, short width, short height, long offset, int len) {
+        super(offset, len);
+        this.type = type;
         this.width = width;
         this.height = height;
     }
@@ -36,9 +38,15 @@ public class JpegImage extends Extent {
         return height & StreamUtil.USHORT_MASK;
     }
 
+    public short getType() {
+        return type;
+    }
+
     @Override
     protected String toStringPrefix() {
-        return super.toStringPrefix() + ", width=" + width +
+        return super.toStringPrefix() +
+                ", type=" + type +
+                ", width=" + width +
                 ", height=" + height;
     }
 }

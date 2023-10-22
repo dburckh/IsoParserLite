@@ -171,6 +171,10 @@ public class TrackListener implements TypedParseListener {
         public IntArray getSampleSizes() {
             return sampleSizes;
         }
+
+        public int getHandler() {
+            return handler;
+        }
     }
 
     public static class VideoTrack extends Track {

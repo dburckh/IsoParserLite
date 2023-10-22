@@ -1,6 +1,7 @@
 package com.homesoft.iso;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.homesoft.iso.box.BaseContainerBox;
 import com.homesoft.iso.box.CompactSampleSizeBox;
@@ -14,6 +15,7 @@ import com.homesoft.iso.box.MediaHeaderBox;
 import com.homesoft.iso.box.MovieHeaderBox;
 import com.homesoft.iso.box.RootContainerBox;
 import com.homesoft.iso.box.SampleDescriptionBox;
+import com.homesoft.iso.box.SampleEntryBox;
 import com.homesoft.iso.box.SampleSizeBox;
 import com.homesoft.iso.box.StringBox;
 import com.homesoft.iso.box.TrackHeaderBox;
@@ -22,7 +24,7 @@ import com.homesoft.iso.box.UUIDResult;
 import com.homesoft.iso.box.VisualSampleEntry;
 import com.homesoft.iso.box.cr3.CRawVisualSampleEntry;
 import com.homesoft.iso.box.cr3.CRawVisualSampleEntryBox;
-import com.homesoft.iso.box.cr3.JpegImage;
+import com.homesoft.iso.box.cr3.ImageExtent;
 import com.homesoft.iso.box.cr3.PreviewBox;
 import com.homesoft.iso.box.cr3.PreviewContainerBox;
 import com.homesoft.iso.box.cr3.ThumbnailBox;
@@ -71,6 +73,7 @@ public class CanonRaw3 implements BoxTypes {
                                                 .addParser(TYPE_stbl, new BaseContainerBox()
                                                         .addParser(TYPE_stsd, new SampleDescriptionBox(root, handlerBox)
                                                                 .addParser(new CRawVisualSampleEntryBox())
+                                                                .addParser(BoxTypes.TYPE_NA, new SampleEntryBox())
                                                         )
                                                         .addParser(new SampleSizeBox())
                                                         .addParser(new CompactSampleSizeBox())
@@ -126,43 +129,79 @@ public class CanonRaw3 implements BoxTypes {
         this.work = work;
     }
 
-    public JpegImage getThumbnail() {
+    public ImageExtent getThumbnail() {
         return work.thumbnail;
+    }
+
+    public ImageExtent getPreview() {
+        return work.preview;
     }
 
     public String getXmp() {
         return work.xmp;
     }
 
-    public JpegImage getTrackImage() {
-        for (TrackListener.Track track : work.trackList) {
-            if (track instanceof TrackListener.VideoTrack) {
-                TrackListener.VideoTrack videoTrack = (TrackListener.VideoTrack) track;
-                VisualSampleEntry visualSampleEntry = videoTrack.getVisualSampleEntry();
-                if (visualSampleEntry instanceof CRawVisualSampleEntry) {
-                    CRawVisualSampleEntry cRawVisualSampleEntry = (CRawVisualSampleEntry) visualSampleEntry;
-                    if (cRawVisualSampleEntry.getImageType() == CRawVisualSampleEntry.IMAGE_TYPE_JPEG &&
-                            track.getSampleSizes() != null && track.getChunkOffsets() != null) {
-                        return new JpegImage(cRawVisualSampleEntry.getRawWidth(),
-                                cRawVisualSampleEntry.getRawHeight(),
-                                track.getChunkOffsets().getLong(0),
-                                track.getSampleSizes().getInt(0));
+    @Nullable
+    public static ImageExtent getImageExtent(TrackListener.VideoTrack videoTrack) {
+        VisualSampleEntry visualSampleEntry = videoTrack.getVisualSampleEntry();
+        if (visualSampleEntry instanceof CRawVisualSampleEntry) {
+            CRawVisualSampleEntry cRawVisualSampleEntry = (CRawVisualSampleEntry) visualSampleEntry;
+            if (videoTrack.getSampleSizes() != null && videoTrack.getChunkOffsets() != null) {
+                return new ImageExtent(cRawVisualSampleEntry.getImageType(),
+                        cRawVisualSampleEntry.getRawWidth(),
+                        cRawVisualSampleEntry.getRawHeight(),
+                        videoTrack.getChunkOffsets().getLong(0),
+                        videoTrack.getSampleSizes().getInt(0));
 
-                    }
-                }
             }
         }
         return null;
     }
 
-    public JpegImage getBestPreview() {
-        JpegImage previewImage = work.preview;
-        JpegImage trackImage = getTrackImage();
-        if (JpegImage.COMPARATOR.compare(previewImage, trackImage) < 0) {
-            return previewImage;
-        } else {
-            return trackImage;
+    public static short getImageType(TrackListener.VideoTrack videoTrack) {
+        VisualSampleEntry visualSampleEntry = videoTrack.getVisualSampleEntry();
+        if (visualSampleEntry instanceof CRawVisualSampleEntry) {
+            return ((CRawVisualSampleEntry) visualSampleEntry).getImageType();
         }
+        return -1;
+    }
+
+    public ImageExtent getBestImageTrack(short type) {
+        ImageExtent imageExtent = null;
+        for (TrackListener.Track track : work.trackList) {
+            if (track instanceof TrackListener.VideoTrack) {
+                final TrackListener.VideoTrack videoTrack = (TrackListener.VideoTrack) track;
+                if (getImageType(videoTrack) == type) {
+                    final ImageExtent candidate = getImageExtent(videoTrack);
+                    if (ImageExtent.COMPARATOR.compare(candidate, imageExtent) > 0) {
+                        imageExtent = candidate;
+                    }
+                }
+            }
+        }
+        return imageExtent;
+    }
+
+    public ImageExtent getBestJpeg() {
+        ImageExtent previewImage = work.preview;
+        ImageExtent trackImage = getBestImageTrack(CRawVisualSampleEntry.IMAGE_TYPE_JPEG);
+        if (ImageExtent.COMPARATOR.compare(previewImage, trackImage) < 0) {
+            return trackImage;
+        } else {
+            return previewImage;
+        }
+    }
+
+    public long getCreationTime() {
+        return work.movieHeader.getCreationTime();
+    }
+
+    public long getModificationTime() {
+        return work.movieHeader.getModificationTime();
+    }
+
+    public TrackListener.Track getTrack(int index) {
+        return work.trackList.get(index);
     }
 
     public static class Work {
@@ -170,12 +209,12 @@ public class CanonRaw3 implements BoxTypes {
         Header movieHeader;
 
         @TypeResult(ThumbnailBox.TYPE_THMB)
-        JpegImage thumbnail;
+        ImageExtent thumbnail;
 
         String xmp;
 
         @TypeResult(PreviewBox.TYPE_PRVW)
-        JpegImage preview;
+        ImageExtent preview;
 
         private final ArrayList<TrackListener.Track> trackList = new ArrayList<>();
 

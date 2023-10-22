@@ -17,11 +17,12 @@ public class ThumbnailBox implements TypedBox {
 
     @Nullable
     @Override
-    public JpegImage read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
+    public ImageExtent read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
         final int version = BoxHeader.getVersion(versionFlags);
-        return new JpegImage(streamReader.getShort(),
+        return new ImageExtent(CRawVisualSampleEntry.IMAGE_TYPE_JPEG,
                 streamReader.getShort(),
-                version == 1 ? streamReader.position() : streamReader.position() + 4,
+                streamReader.getShort(),
+                version == 1 ? streamReader.position() + 4: streamReader.position() + 8,
                 streamReader.getInt());
     }
 

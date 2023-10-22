@@ -19,13 +19,14 @@ public class PreviewBox implements TypedBox {
 
     @Nullable
     @Override
-    public JpegImage read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
+    public ImageExtent read(BoxHeader boxHeader, StreamReader streamReader, int versionFlags) throws IOException {
         streamReader.skip(2);
         ByteBuffer byteBuffer = StreamUtil.requireSharedBuffer(0xc, streamReader);
         short width = byteBuffer.getShort();
         short height = byteBuffer.getShort();
         byteBuffer.getShort(); // Unknown
-        return new JpegImage(width, height, streamReader.position(), byteBuffer.getInt());
+        return new ImageExtent(CRawVisualSampleEntry.IMAGE_TYPE_JPEG,
+                width, height, streamReader.position() + 4, byteBuffer.getInt());
     }
 
     @Override
