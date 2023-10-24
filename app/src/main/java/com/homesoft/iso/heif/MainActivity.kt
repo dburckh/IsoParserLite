@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity(), ImageDecoder.OnBitmapRendered {
                 contentResolver.openFileDescriptor(it, "r")?.let {pfd ->
                     val reader = FDStreamReader(pfd.fileDescriptor, 512)
                     val heif = Heif.getParser().parse(reader)
-                    val primaryItem = heif.primaryItemId
+                    val primaryItem = heif.primaryItem
                     if (primaryItem is Grid) {
                         val gridDecoder = GridDecoder(primaryItem, this, handler)
                         gridDecoder.decode(reader)

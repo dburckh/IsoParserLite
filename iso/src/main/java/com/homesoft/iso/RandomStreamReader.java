@@ -12,53 +12,55 @@ import java.nio.ByteOrder;
 public abstract class RandomStreamReader implements StreamReader {
     private static final int BUFFER_BLOCKS = 2;
     private final ByteBuffer byteBuffer;
+    private final int blockSize;
 
     private long block = Long.MIN_VALUE;
 
-    private int reads;
+    private int blocksRead;
 
     protected RandomStreamReader(int blockSize) {
         byteBuffer = ByteBuffer.allocateDirect(blockSize * BUFFER_BLOCKS);
         byteBuffer.limit(byteBuffer.position());
+        this.blockSize = blockSize;
     }
 
     /**
      * Read from the stream and via the backing ByteBuffer.  The {@link #position()} will advance.
-     * It's only recommended for reads <= blockSize,
-     * for larger reads use {@link #read(ByteBuffer, long)}
      */
     @Override
     public int read(ByteBuffer readBuffer) throws IOException {
-        int readRemaining = readBuffer.remaining();
-        // Special case 0 to read
-        if (readRemaining == 0) {
-            return 0;
-        }
         final int inPosition = readBuffer.position();
-        while (readRemaining > 0) {
-            ensureCapacity(readRemaining);
-            final int remaining = byteBuffer.remaining();
-            if (remaining == 0) {
-                break;
-            }
-            if (remaining > readRemaining) {
-                // More bytes in our buffer than read buffer,
-                // set limit to prevent BufferOverflowException
-                final int inLimit = byteBuffer.limit();
+        StreamUtil.copy(byteBuffer, readBuffer);
+        if (readBuffer.hasRemaining()) {
+            // byteBuffer is exhausted read from stream
+            if (readBuffer.remaining() >= blockSize) {
+                int readBlocks = readBuffer.remaining() / blockSize;
+                final int toRead = readBlocks * blockSize;
+                final int inLimit = readBuffer.limit();
                 try {
-                    byteBuffer.limit(byteBuffer.position() + readRemaining);
-                    readBuffer.put(byteBuffer);
+                    readBuffer.limit(readBuffer.position() + toRead);
+                    final int read = read(readBuffer, (block + 2) * blockSize);
+                    if (read != toRead) {
+                        if (read > 0) {
+                            readBlocks = read / blockSize;
+                            int remainder = read - readBlocks * blockSize;
+                            byteBuffer.rewind();
+                            byteBuffer.limit(remainder);
+                            readBuffer.position(readBuffer.position() - remainder);
+                            StreamUtil.copy(readBuffer, byteBuffer);
+                            block += readBlocks;
+                            blocksRead += readBlocks;
+                        }
+                        return readBuffer.position() - inPosition;
+                    }
+                    block += readBlocks;
+                    blocksRead += readBlocks;
                 } finally {
-                    byteBuffer.limit(inLimit);
+                    readBuffer.limit(inLimit);
                 }
-            } else {
-                readBuffer.put(byteBuffer);
             }
-            readRemaining = readBuffer.remaining();
-        }
-        // Special case, read on EOF
-        if (inPosition == readBuffer.position()) {
-            return -1;
+            ensureCapacity(readBuffer.remaining());
+            StreamUtil.copy(byteBuffer, readBuffer);
         }
         return readBuffer.position() - inPosition;
     }
@@ -72,16 +74,15 @@ public abstract class RandomStreamReader implements StreamReader {
 
     public abstract long size() throws IOException;
 
-    private int getBlockSize() {
-        return byteBuffer.capacity() / 2;
+    public int getBlockSize() {
+        return blockSize;
     }
 
     public void position(long pos) throws IOException {
-        final int blockSize = getBlockSize();
-        long newBlock = pos / blockSize;
+        final long newBlock = pos / blockSize;
         if (block != newBlock && block + 1 != newBlock) {
             long readBlock;
-            if (newBlock == block + 2) {
+            if (byteBuffer.hasRemaining() && newBlock == block + 2) {
                 byteBuffer.position(blockSize);
                 byteBuffer.compact();
                 block++;
@@ -93,9 +94,9 @@ public abstract class RandomStreamReader implements StreamReader {
                 block = readBlock = newBlock;
             }
             int read = read(byteBuffer, readBlock * blockSize);
-            reads++;
             if (read > 0) {
                 byteBuffer.flip();
+                blocksRead += read / blockSize;
             } else {
                 byteBuffer.position(byteBuffer.capacity());
             }
@@ -183,7 +184,6 @@ public abstract class RandomStreamReader implements StreamReader {
         return position() - position;
     }
 
-
     /**
      * This technically could be larger
      */
@@ -198,4 +198,7 @@ public abstract class RandomStreamReader implements StreamReader {
         return byteBuffer;
     }
 
+    public int getBlocksRead() {
+        return blocksRead;
+    }
 }

@@ -6,6 +6,7 @@ import androidx.annotation.Nullable;
 import com.homesoft.iso.box.AudioSampleEntryBox;
 import com.homesoft.iso.box.Av1DecoderConfigBox;
 import com.homesoft.iso.box.AvcDecoderConfigBox;
+import com.homesoft.iso.box.CompactSampleSizeBox;
 import com.homesoft.iso.box.Data;
 import com.homesoft.iso.box.DataBox;
 import com.homesoft.iso.box.ESDescriptorBox;
@@ -16,11 +17,14 @@ import com.homesoft.iso.box.GPSCoordinatesBox;
 import com.homesoft.iso.box.HandlerBox;
 import com.homesoft.iso.box.Header;
 import com.homesoft.iso.box.HevcDecoderConfigBox;
+import com.homesoft.iso.box.IntArrayBox;
+import com.homesoft.iso.box.LongArrayBox;
 import com.homesoft.iso.box.MediaHeaderBox;
 import com.homesoft.iso.box.MovieHeaderBox;
 import com.homesoft.iso.box.PixelAspectRatioBox;
 import com.homesoft.iso.box.RootContainerBox;
 import com.homesoft.iso.box.SampleDescriptionBox;
+import com.homesoft.iso.box.SampleSizeBox;
 import com.homesoft.iso.box.SetIndex;
 import com.homesoft.iso.box.TrackHeaderBox;
 import com.homesoft.iso.box.VisualSampleEntryBox;
@@ -69,6 +73,10 @@ public class Movie implements BoxTypes {
                                         .addParser(handlerBox)
                                         .addParser(TYPE_minf, new BaseContainerBox()
                                                 .addParser(TYPE_stbl, new BaseContainerBox()
+                                                        .addParser(new SampleSizeBox())
+                                                        .addParser(new CompactSampleSizeBox())
+                                                        .addParser(BoxTypes.TYPE_stco, new IntArrayBox(true))
+                                                        .addParser(BoxTypes.TYPE_co64, new LongArrayBox(true))
                                                         .addParser(TYPE_stsd, new SampleDescriptionBox(root, handlerBox)
                                                                 // VIDEO and SOUND are hacks to support generic types
                                                                 .addParser(HandlerBox.VIDEO, new VisualSampleEntryBox()

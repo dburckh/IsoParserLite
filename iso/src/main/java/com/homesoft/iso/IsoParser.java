@@ -28,10 +28,14 @@ public abstract class IsoParser<T> {
                 (DependencyManager) rootContainerBox : DependencyManager.NULL;
     }
 
-    public T parse(File file) throws IOException {
+    public static FileChannelReader getFileChannelReader(File file) throws IOException {
         RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
         final FileChannel fileChannel = randomAccessFile.getChannel();
-        return parse(new FileChannelReader(fileChannel, 1024));
+        return new FileChannelReader(fileChannel, 1024);
+    }
+
+    public T parse(File file) throws IOException {
+        return parse(getFileChannelReader(file));
     }
 
 

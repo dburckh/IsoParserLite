@@ -1,5 +1,6 @@
 package com.homesoft.iso.heif;
 
+import com.homesoft.iso.FileChannelReader;
 import com.homesoft.iso.IsoParser;
 import com.homesoft.iso.Movie;
 import com.homesoft.iso.box.AudioSampleEntry;
@@ -17,17 +18,18 @@ import javax.swing.plaf.basic.BasicSliderUI;
 
 public class MovieTest {
     private static final int VP09 = 0x76703039;
-    File getSongFile() {
+    public static File getSongFile() {
         return new File("src/test/resources/song.m4a");
     }
-    File getVideoFile() {
+    public static File getVideoFile() {
         return new File("src/test/resources/video.mp4");
     }
 
     @Test
     public void parseSong() throws Exception {
         IsoParser<Movie> parser = Movie.getParser();
-        Movie movie = parser.parse(getSongFile());
+        FileChannelReader fileChannelReader = IsoParser.getFileChannelReader(getSongFile());
+        Movie movie = parser.parse(fileChannelReader);
 
         Movie.MediaMeta mediaMeta = movie.getMediaMeta();
         Assert.assertEquals("I Am A Man Of Constant Sorrow", mediaMeta.getName());
@@ -44,12 +46,15 @@ public class MovieTest {
         Assert.assertEquals(DecoderConfigDescriptor.OBJECT_TYPE_AAC, decoderConfigDescriptor.getObjectTypeIndication());
 
         Assert.assertEquals(movie.getDuration(), audioTrack.getDuration());
+
+        System.out.println("Blocks Read: " + fileChannelReader.getBlocksRead());
     }
 
     @Test
     public void parseVideo() throws Exception {
         IsoParser<Movie> parser = Movie.getParser();
-        Movie movie = parser.parse(getVideoFile());
+        FileChannelReader fileChannelReader = IsoParser.getFileChannelReader(getVideoFile());
+        Movie movie = parser.parse(fileChannelReader);
 
         List<TrackListener.Track> trackList = movie.getTrackList();
         TrackListener.AudioTrack audioTrack = null;
@@ -73,6 +78,8 @@ public class MovieTest {
         // Assert the display size
         Assert.assertEquals(1080.0f, videoTrack.getWidth(),0.1f);
         Assert.assertEquals(1920.0f, videoTrack.getHeight(),0.1f);
+        Assert.assertEquals(17, videoTrack.getChunkOffsets().getLongs().length);
+        Assert.assertEquals(234, videoTrack.getSampleSizes().toInts().length);
 
         // Assert the encoded size
         VisualSampleEntry visualSampleEntry = videoTrack.getVisualSampleEntry();
@@ -80,5 +87,7 @@ public class MovieTest {
         Assert.assertEquals(1920, visualSampleEntry.getHeight());
 
         Assert.assertNotNull(movie.getGpsCoordinates());
+
+        System.out.println("Blocks Read: " + fileChannelReader.getBlocksRead());
     }
 }

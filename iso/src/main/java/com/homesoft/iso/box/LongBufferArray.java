@@ -3,10 +3,10 @@ package com.homesoft.iso.box;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
-public class BufferLongArray implements LongArray {
+public class LongBufferArray implements LongArray {
     private final LongBuffer longBuffer;
 
-    public BufferLongArray(ByteBuffer byteBuffer) {
+    public LongBufferArray(ByteBuffer byteBuffer) {
         this.longBuffer = byteBuffer.clear().asLongBuffer();
     }
 

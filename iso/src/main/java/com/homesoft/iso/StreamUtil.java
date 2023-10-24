@@ -204,4 +204,28 @@ public class StreamUtil {
         }
         return array;
     }
+
+    /**
+     * Copies the lesser of from.remaining() and to.remaining() bytes to "to"
+     * @return the actual number of bytes copied
+     */
+    public static int copy(ByteBuffer from, ByteBuffer to) {
+        final int fromPosition = from.position();
+        final int fromLimit = from.limit();
+        final int fromRemaining = fromLimit - fromPosition;
+        final int toRemaining = to.remaining();
+
+        if (fromRemaining > toRemaining) {
+            try {
+                from.limit(fromPosition + toRemaining);
+                to.put(from);
+            } finally {
+                from.limit(fromLimit);
+            }
+            return toRemaining;
+        } else {
+            to.put(from);
+            return fromRemaining;
+        }
+    }
 }

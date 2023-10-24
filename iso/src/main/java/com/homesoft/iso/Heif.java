@@ -158,8 +158,12 @@ public class Heif implements BoxTypes {
         return new Image(itemInfoEntry, properties, itemLocation);
     }
 
+    public int getPrimaryItemId() {
+        return primaryItemId;
+    }
+
     @NonNull
-    public Item getPrimaryItemId() throws InvalidObjectException {
+    public Item getPrimaryItem() throws InvalidObjectException {
         final ItemInfoEntry itemInfoEntry = StreamUtil.findId(primaryItemId, itemInfoEntries);
         if (itemInfoEntry == null) {
             throw new InvalidObjectException("Primary Item Info not found in ItemInfoEntries");
@@ -229,7 +233,7 @@ public class Heif implements BoxTypes {
             return itemInfoEntry.type;
         }
 
-        Type getProperty(int type) {
+        public Type getProperty(int type) {
             return StreamUtil.findType(type, properties);
         }
 
