@@ -3,8 +3,8 @@ package com.homesoft.iso;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.homesoft.iso.box.IntArray;
-import com.homesoft.iso.box.LongArray;
+import com.homesoft.iso.reader.IntArray;
+import com.homesoft.iso.reader.LongArray;
 
 import java.io.IOException;
 import java.lang.reflect.Array;

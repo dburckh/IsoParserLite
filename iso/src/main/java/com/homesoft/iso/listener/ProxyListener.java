@@ -9,8 +9,8 @@ public abstract class ProxyListener implements ParseListener {
         this.parseListener = parseListener;
     }
     @Override
-    public void onContainerStart(int type, Object result) {
-        parseListener.onContainerStart(type, result);
+    public void onContainerStart(int type) {
+        parseListener.onContainerStart(type);
     }
 
     @Override

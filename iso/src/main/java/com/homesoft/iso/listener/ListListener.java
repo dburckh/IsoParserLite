@@ -38,7 +38,7 @@ public class ListListener implements TypedParseListener {
     }
 
     @Override
-    public void onContainerStart(int type, Object result) {
+    public void onContainerStart(int type) {
         if (type == getType()) {
             depth = 0;
         } else if (depth >= 0) {

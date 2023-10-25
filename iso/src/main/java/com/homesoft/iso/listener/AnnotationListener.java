@@ -106,8 +106,8 @@ public class AnnotationListener implements ParseListener {
     }
 
     @Override
-    public void onContainerStart(int type, Object result) {
-        onResult(type, result);
+    public void onContainerStart(int type) {
+        //Intentionally blank
     }
 
     @Override

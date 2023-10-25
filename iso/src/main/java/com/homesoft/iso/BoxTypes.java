@@ -1,8 +1,8 @@
 package com.homesoft.iso;
 
-import com.homesoft.iso.box.Data;
-import com.homesoft.iso.box.Extent;
-import com.homesoft.iso.box.SetIndex;
+import com.homesoft.iso.reader.Data;
+import com.homesoft.iso.reader.Extent;
+import com.homesoft.iso.reader.SetIndex;
 
 public interface BoxTypes {
     int TYPE_NA = 0; // Not applicable tag (null).

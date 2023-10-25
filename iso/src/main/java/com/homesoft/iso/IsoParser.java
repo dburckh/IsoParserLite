@@ -2,30 +2,27 @@ package com.homesoft.iso;
 
 import androidx.annotation.NonNull;
 
+import com.homesoft.iso.listener.HierarchyListener;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.BufferUnderflowException;
 import java.nio.channels.FileChannel;
+import java.util.HashMap;
 
-public abstract class IsoParser<T> {
-    private final ContainerBox rootContainerBox;
-    protected final ParseListener parseListener;
-
+public class IsoParser {
+    private final BoxContainer rootBoxContainer;
     private final DependencyManager dependencyManager;
-
-    public static final Object[] OBJECT_ARRAY = new Object[0];
 
     public static long getEnd(@NonNull StreamReader streamReader) throws IOException {
         return (streamReader instanceof RandomStreamReader) ? ((RandomStreamReader) streamReader).size() : Long.MAX_VALUE;
     }
 
-    public abstract T parse(@NonNull StreamReader streamReader) throws IOException;
-    public IsoParser(@NonNull ContainerBox rootContainerBox, @NonNull ParseListener parseListener) {
-        this.rootContainerBox = rootContainerBox;
-        this.parseListener = parseListener;
-        dependencyManager = rootContainerBox instanceof DependencyManager ?
-                (DependencyManager) rootContainerBox : DependencyManager.NULL;
+    public IsoParser(@NonNull BoxContainer rootBoxContainer) {
+        this.rootBoxContainer = rootBoxContainer;
+        dependencyManager = rootBoxContainer instanceof DependencyManager ?
+                (DependencyManager) rootBoxContainer : DependencyManager.NULL;
     }
 
     public static FileChannelReader getFileChannelReader(File file) throws IOException {
@@ -34,58 +31,82 @@ public abstract class IsoParser<T> {
         return new FileChannelReader(fileChannel, 1024);
     }
 
-    public T parse(File file) throws IOException {
-        return parse(getFileChannelReader(file));
+    public void parse(File file, ParseListener parseListener) throws IOException {
+        parse(getFileChannelReader(file), parseListener);
     }
 
-
-    protected void parseImpl(@NonNull StreamReader streamReader) throws IOException {
-        parseImpl(streamReader, getEnd(streamReader));
-    }
-    protected void parseImpl(StreamReader streamReader, long end) throws IOException {
-        parseImpl(streamReader, end, rootContainerBox);
+    protected void parse(StreamReader streamReader, ParseListener parseListener) throws IOException {
+        new ParseJob(streamReader, parseListener).parse(rootBoxContainer, getEnd(streamReader));
     }
 
-    /**
-     * Parse an ISO BMFF stream
-     * @param streamReader input stream for the parser
-     * @param end last byte of the file or {@link Long#MAX_VALUE} if unknown
-     */
-    protected void parseImpl(StreamReader streamReader, long end, ContainerBox containerBox) throws IOException {
-        long start = streamReader.position();
+    public String dump(File file) throws IOException {
+        final HierarchyListener hierarchyListener = new HierarchyListener();
+        final FileChannelReader fileChannelReader = getFileChannelReader(file);
+        new ParseJob(getFileChannelReader(file), hierarchyListener).parse(rootBoxContainer, fileChannelReader.size());
+        return hierarchyListener.toString();
+    }
+
+    private class ParseJob {
+        private final HashMap<BoxParser, Object> dependencyValueMap = new HashMap<>();
+        private final StreamReader streamReader;
+        private final ParseListener parseListener;
+
+        public ParseJob(StreamReader streamReader, ParseListener parseListener) {
+            this.streamReader = streamReader;
+            this.parseListener = parseListener;
+        }
+
+        private void processResult(int type, BoxParser boxParser, Object result) {
+            parseListener.onParsed(type, result);
+            if (dependencyManager.contains(boxParser)) {
+                dependencyValueMap.put(boxParser, result);
+            }
+        }
+
+        void parse(BoxContainer boxContainer, long end) throws IOException {
+            final Object containerDependency;
+            if (boxContainer instanceof DependantParser) {
+                containerDependency = dependencyValueMap.get(((DependantParser) boxContainer).getDependantParser());
+            } else {
+                containerDependency = null;
+            }
+            long start = streamReader.position();
             while (start < end) {
-                final BoxHeader boxHeader;
+                final Box box;
                 try {
-                    boxHeader = BoxHeader.readBox(streamReader);
+                    box = Box.readBox(streamReader);
                 } catch (BufferUnderflowException e) {
                     // This happens when we hit the end of a true stream
                     break;
                 }
-                final int type = boxHeader.type;
-                final Box box = containerBox.getBox(boxHeader);
-                if (box != null) {
-                    final Object result = box.read(boxHeader, streamReader, box.isFullBox() ? streamReader.getInt() :  0);
-                    dependencyManager.updateDependencies(box, result);
-                    if (box instanceof ContainerBox) {
-                        parseListener.onContainerStart(type, result);
-                        parseImpl(streamReader, start + boxHeader.getSize(), (ContainerBox) box);
+                final int type = box.type;
+                final BoxParser parser = boxContainer.getParser(box, containerDependency);
+                if (parser != null) {
+                    if (parser instanceof BoxReader) {
+                        processResult(type, parser, ((BoxReader)parser).read(box, streamReader));
+                    } else if (parser instanceof DependantBoxReader) {
+                        final Object dependency = dependencyValueMap.get(((DependantParser) parser).getDependantParser());
+                        processResult(type, parser,  ((DependantBoxReader) parser).read(box, streamReader, dependency));
+                    }
+                    if (parser instanceof BoxContainer) {
+                        parseListener.onContainerStart(type);
+                        parse((BoxContainer) parser, start + box.getSize());
                         parseListener.onContainerEnd(type);
-                    } else {
-                        parseListener.onParsed(type, result);
                     }
                     if (parseListener.isCancelled()) {
                         return;
                     }
                 }
-                if (boxHeader.getSize() == BoxHeader.SIZE_EOF) {
+                if (box.getSize() == Box.SIZE_EOF) {
                     break;
                 }
-                start += boxHeader.getSize();
+                start += box.getSize();
                 if (streamReader instanceof RandomStreamReader) {
                     ((RandomStreamReader)streamReader).position(start);
                 } else {
                     streamReader.skip(start - streamReader.position());
                 }
             }
+        }
     }
 }

@@ -1,10 +1,11 @@
 package com.homesoft.iso.listener;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.homesoft.iso.BoxHeader;
+import com.homesoft.iso.Box;
 import com.homesoft.iso.BoxTypes;
-import com.homesoft.iso.ContainerBox;
+import com.homesoft.iso.BoxContainer;
 import com.homesoft.iso.ParseListener;
 import com.homesoft.iso.StreamUtil;
 import com.homesoft.iso.Type;
@@ -13,7 +14,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 
 /**
@@ -24,7 +24,7 @@ import java.util.Objects;
  */
 public class HierarchyListener implements ParseListener {
     private final ArrayDeque<TypedListResult> stack = new ArrayDeque<>();
-    private final TypedListResult root = new TypedListResult(BoxTypes.TYPE_NA, null);
+    private final TypedListResult root = new TypedListResult(BoxTypes.TYPE_NA);
     private final int cancelType;
 
     private boolean cancelled = false;
@@ -34,7 +34,7 @@ public class HierarchyListener implements ParseListener {
     }
     /**
      * Default constructor
-     * @param cancelType cause parsing to stop after a {@link ContainerBox} of this type
+     * @param cancelType cause parsing to stop after a {@link BoxContainer} of this type
      *                   has been encountered or {@link BoxTypes#TYPE_NA}
      */
     public HierarchyListener(int cancelType) {
@@ -43,9 +43,9 @@ public class HierarchyListener implements ParseListener {
     }
 
     @Override
-    public void onContainerStart(int type, Object result) {
+    public void onContainerStart(int type) {
         final TypedListResult parentList = Objects.requireNonNull(stack.peek());
-        final TypedListResult childList = new TypedListResult(type, result);
+        final TypedListResult childList = new TypedListResult(type);
         parentList.add(childList);
         stack.push(childList);
     }
@@ -62,7 +62,7 @@ public class HierarchyListener implements ParseListener {
         } else {
             resultType = new TypedResult(type, result);
         }
-        typedList.list.add(resultType);
+        typedList.add(resultType);
     }
 
     @Override
@@ -78,13 +78,13 @@ public class HierarchyListener implements ParseListener {
         return cancelled;
     }
 
-    private void toString(ArrayList<Type> list, StringBuilder sb, String indent) {
+    private void toString(List<Type> list, StringBuilder sb, String indent) {
         for (Type type : list) {
             sb.append(indent);
             sb.append(type.toString());
             sb.append('\n');
             if (type instanceof TypedListResult) {
-                toString(((TypedListResult) type).list, sb, indent + "-");
+                toString(((TypedListResult) type).getRawList(), sb, indent + "-");
             }
         }
     }
@@ -96,7 +96,7 @@ public class HierarchyListener implements ParseListener {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        toString(root.list, sb, "");
+        toString(root.getRawList(), sb, "");
         return sb.toString();
     }
 
@@ -116,7 +116,7 @@ public class HierarchyListener implements ParseListener {
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder(BoxHeader.typeToString(type));
+            final StringBuilder sb = new StringBuilder(Box.typeToString(type));
             if (result != null) {
                 StreamUtil.append(sb, result);
             }
@@ -125,18 +125,22 @@ public class HierarchyListener implements ParseListener {
     }
 
     public static class TypedListResult extends TypedResult {
-        private final ArrayList<Type> list = new ArrayList<>();
 
-        public TypedListResult(int type, @Nullable Object result) {
-            super(type, result);
+        public TypedListResult(int type) {
+            super(type, new ArrayList<>());
+        }
+
+        @NonNull
+        ArrayList<Type> getRawList() {
+            return (ArrayList<Type>)result;
         }
 
         public void add(Type type) {
-            list.add(type);
+            getRawList().add(type);
         }
 
         public List<Type> getList() {
-            return Collections.unmodifiableList(list);
+            return Collections.unmodifiableList(getRawList());
         }
     }
 }

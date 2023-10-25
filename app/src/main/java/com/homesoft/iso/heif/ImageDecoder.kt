@@ -9,9 +9,9 @@ import android.os.Handler
 import android.view.PixelCopy
 import com.homesoft.iso.Heif.Image
 import com.homesoft.iso.RandomStreamReader
-import com.homesoft.iso.box.CodecSpecificData
-import com.homesoft.iso.box.HevcDecoderConfig
-import com.homesoft.iso.box.ItemInfoEntry
+import com.homesoft.iso.reader.CodecSpecificData
+import com.homesoft.iso.reader.HevcDecoderConfig
+import com.homesoft.iso.reader.ItemInfoEntry
 import java.nio.ByteBuffer
 import java.util.Collections
 

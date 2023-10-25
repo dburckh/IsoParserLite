@@ -20,7 +20,7 @@ public class IListListener implements TypedParseListener {
     }
 
     @Override
-    public void onContainerStart(int type, Object result) {
+    public void onContainerStart(int type) {
         lastType = type;
     }
 

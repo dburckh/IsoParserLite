@@ -3,31 +3,31 @@ package com.homesoft.iso;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.homesoft.iso.box.BaseContainerBox;
-import com.homesoft.iso.box.CompactSampleSizeBox;
-import com.homesoft.iso.box.ExtentBox;
-import com.homesoft.iso.box.FileTypeBox;
-import com.homesoft.iso.box.HandlerBox;
-import com.homesoft.iso.box.Header;
-import com.homesoft.iso.box.IntArrayBox;
-import com.homesoft.iso.box.LongArrayBox;
-import com.homesoft.iso.box.MediaHeaderBox;
-import com.homesoft.iso.box.MovieHeaderBox;
-import com.homesoft.iso.box.RootContainerBox;
-import com.homesoft.iso.box.SampleDescriptionBox;
-import com.homesoft.iso.box.SampleEntryBox;
-import com.homesoft.iso.box.SampleSizeBox;
-import com.homesoft.iso.box.StringBox;
-import com.homesoft.iso.box.TrackHeaderBox;
-import com.homesoft.iso.box.UUIDBox;
-import com.homesoft.iso.box.UUIDResult;
-import com.homesoft.iso.box.VisualSampleEntry;
-import com.homesoft.iso.box.cr3.CRawVisualSampleEntry;
-import com.homesoft.iso.box.cr3.CRawVisualSampleEntryBox;
-import com.homesoft.iso.box.cr3.ImageExtent;
-import com.homesoft.iso.box.cr3.PreviewBox;
-import com.homesoft.iso.box.cr3.PreviewContainerBox;
-import com.homesoft.iso.box.cr3.ThumbnailBox;
+import com.homesoft.iso.reader.BaseBoxContainer;
+import com.homesoft.iso.reader.CompactSampleSizeReader;
+import com.homesoft.iso.reader.ExtentReader;
+import com.homesoft.iso.reader.FileTypeReader;
+import com.homesoft.iso.reader.HandlerReader;
+import com.homesoft.iso.reader.Header;
+import com.homesoft.iso.reader.IntArrayReader;
+import com.homesoft.iso.reader.LongArrayReader;
+import com.homesoft.iso.reader.MediaHeaderReader;
+import com.homesoft.iso.reader.MovieHeaderReader;
+import com.homesoft.iso.reader.RootContainerReader;
+import com.homesoft.iso.reader.SampleDescriptionReader;
+import com.homesoft.iso.reader.SampleEntryReader;
+import com.homesoft.iso.reader.SampleSizeReader;
+import com.homesoft.iso.reader.StringReader;
+import com.homesoft.iso.reader.TrackHeaderReader;
+import com.homesoft.iso.reader.UUIDBox;
+import com.homesoft.iso.reader.UUIDResult;
+import com.homesoft.iso.reader.VisualSampleEntry;
+import com.homesoft.iso.reader.cr3.CRawVisualSampleEntry;
+import com.homesoft.iso.reader.cr3.CRawVisualSampleEntryReader;
+import com.homesoft.iso.reader.cr3.ImageExtent;
+import com.homesoft.iso.reader.cr3.PreviewReader;
+import com.homesoft.iso.reader.cr3.PreviewContainerReader;
+import com.homesoft.iso.reader.cr3.ThumbnailReader;
 import com.homesoft.iso.listener.AnnotationListener;
 import com.homesoft.iso.listener.CompositeListener;
 import com.homesoft.iso.listener.HierarchyListener;
@@ -53,53 +53,55 @@ public class CanonRaw3 implements BoxTypes {
 
     private static final byte[] XMP_UUID = {(byte)0xBE, (byte)0x7A, (byte)0xCF, (byte)0xCB, (byte)0x97, (byte)0xA9, (byte)0x42, (byte)0xE8, (byte)0x9C, (byte)0x71, (byte)0x99, (byte)0x94, (byte)0x91, (byte)0xE3, (byte)0xAF, (byte)0xAC};
     private static final byte[] PRVW_UUID = {(byte)0xEA, (byte)0xF4, (byte)0x2B, (byte)0x5E, (byte)0x1C, (byte)0x98, (byte)0x4B, (byte)0x88, (byte)0xB9, (byte)0xFB, (byte)0xB7, (byte)0xDC, (byte)0x40, (byte)0x6E, (byte)0x4D, (byte)0x16};
-    public final static ContainerBox ROOT_CONTAINER;
+    public final static IsoParser PARSER;
 
     static {
-        final RootContainerBox root = new RootContainerBox();
-        final MovieHeaderBox movieHeaderBox = new MovieHeaderBox();
-        final HandlerBox handlerBox = new HandlerBox();
+        final RootContainerReader root = new RootContainerReader();
+        final MovieHeaderReader movieHeaderReader = new MovieHeaderReader();
+        final HandlerReader handlerReader = new HandlerReader();
 
-        ROOT_CONTAINER = root
-                .addParser(new FileTypeBox())
-                .addParser(TYPE_moov, new BaseContainerBox()
-                        .addParser(movieHeaderBox)
-                        .addParser(TYPE_trak, new BaseContainerBox()
-                                .addParser(new TrackHeaderBox(root, movieHeaderBox))
-                                .addParser(TYPE_mdia, new BaseContainerBox()
-                                        .addParser(new MediaHeaderBox())
-                                        .addParser(handlerBox)
-                                        .addParser(TYPE_minf, new BaseContainerBox()
-                                                .addParser(TYPE_stbl, new BaseContainerBox()
-                                                        .addParser(TYPE_stsd, new SampleDescriptionBox(root, handlerBox)
-                                                                .addParser(new CRawVisualSampleEntryBox())
-                                                                .addParser(BoxTypes.TYPE_NA, new SampleEntryBox())
+        PARSER = new IsoParser(
+                root
+                        .addParser(new FileTypeReader())
+                        .addParser(TYPE_moov, new BaseBoxContainer()
+                                .addParser(movieHeaderReader)
+                                .addParser(TYPE_trak, new BaseBoxContainer()
+                                        .addParser(new TrackHeaderReader(root, movieHeaderReader))
+                                        .addParser(TYPE_mdia, new BaseBoxContainer()
+                                                .addParser(new MediaHeaderReader())
+                                                .addParser(handlerReader)
+                                                .addParser(TYPE_minf, new BaseBoxContainer()
+                                                        .addParser(TYPE_stbl, new BaseBoxContainer()
+                                                                .addParser(TYPE_stsd, new SampleDescriptionReader(root, handlerReader)
+                                                                        .addParser(new CRawVisualSampleEntryReader())
+                                                                        .addParser(BoxTypes.TYPE_NA, new SampleEntryReader())
+                                                                )
+                                                                .addParser(new SampleSizeReader())
+                                                                .addParser(new CompactSampleSizeReader())
+                                                                .addParser(BoxTypes.TYPE_stco, new IntArrayReader())
+                                                                .addParser(BoxTypes.TYPE_co64, new LongArrayReader())
                                                         )
-                                                        .addParser(new SampleSizeBox())
-                                                        .addParser(new CompactSampleSizeBox())
-                                                        .addParser(BoxTypes.TYPE_stco, new IntArrayBox(true))
-                                                        .addParser(BoxTypes.TYPE_co64, new LongArrayBox(true))
                                                 )
                                         )
                                 )
-                        )
-                        .addParser(CANON_UUID, new BaseContainerBox()
-                                .addParser(TYPE_CMT1, new ExtentBox())
-                                .addParser(TYPE_CMT2, new ExtentBox())
-                                .addParser(TYPE_CMT3, new ExtentBox())
-                                .addParser(TYPE_CMT4, new ExtentBox())
-                                .addParser(new ThumbnailBox())
-                        )
+                                .addParser(CANON_UUID, new BaseBoxContainer()
+                                        .addParser(TYPE_CMT1, new ExtentReader())
+                                        .addParser(TYPE_CMT2, new ExtentReader())
+                                        .addParser(TYPE_CMT3, new ExtentReader())
+                                        .addParser(TYPE_CMT4, new ExtentReader())
+                                        .addParser(new ThumbnailReader())
+                                )
 
-                )
-                .addParser(PRVW_UUID, new PreviewContainerBox()
-                        .addParser(new PreviewBox())
-                )
-                .addParser(XMP_UUID, new UUIDBox(new StringBox(false)));
+                        )
+                        .addParser(PRVW_UUID, new PreviewContainerReader()
+                                .addParser(new PreviewReader())
+                        )
+                        .addParser(XMP_UUID, new UUIDBox(new StringReader(false)))
+        );
     }
 
     public static void dump(File file) throws Exception {
-        System.out.println(new StringParser(ROOT_CONTAINER, new HierarchyListener()).parse(file));
+        System.out.println(PARSER.dump(file));
     }
 
     public static void main(String[] args) {
@@ -109,19 +111,19 @@ public class CanonRaw3 implements BoxTypes {
             e.printStackTrace();
         }
     }
-    public static IsoParser<CanonRaw3> getParser() {
+
+    public static CanonRaw3 parse(File file) throws IOException {
+        return parse(IsoParser.getFileChannelReader(file));
+    }
+
+    public static CanonRaw3 parse(StreamReader streamReader) throws IOException {
         final AnnotationListener annotationListener = new AnnotationListener();
         final CompositeListener compositeListener = new CompositeListener(annotationListener);
         final Work work = new Work();
         annotationListener.add(work);
         compositeListener.add(new TrackListener(annotationListener));
-        return new IsoParser<CanonRaw3>(ROOT_CONTAINER, compositeListener) {
-            @Override
-            public CanonRaw3 parse(@NonNull StreamReader streamReader) throws IOException {
-                parseImpl(streamReader);
-                return new CanonRaw3(work);
-            }
-        };
+        PARSER.parse(streamReader, compositeListener);
+        return new CanonRaw3(work);
     }
     private final Work work;
 
@@ -208,12 +210,12 @@ public class CanonRaw3 implements BoxTypes {
         @TypeResult(BoxTypes.TYPE_mvhd)
         Header movieHeader;
 
-        @TypeResult(ThumbnailBox.TYPE_THMB)
+        @TypeResult(ThumbnailReader.TYPE_THMB)
         ImageExtent thumbnail;
 
         String xmp;
 
-        @TypeResult(PreviewBox.TYPE_PRVW)
+        @TypeResult(PreviewReader.TYPE_PRVW)
         ImageExtent preview;
 
         private final ArrayList<TrackListener.Track> trackList = new ArrayList<>();

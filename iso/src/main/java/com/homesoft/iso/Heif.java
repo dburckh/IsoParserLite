@@ -3,24 +3,25 @@ package com.homesoft.iso;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.homesoft.iso.box.Av1DecoderConfigBox;
-import com.homesoft.iso.box.CodecSpecificData;
-import com.homesoft.iso.box.BaseContainerBox;
-import com.homesoft.iso.box.ExtentBox;
-import com.homesoft.iso.box.FileTypeBox;
-import com.homesoft.iso.box.HevcDecoderConfigBox;
-import com.homesoft.iso.box.ImageSpatialExtents;
-import com.homesoft.iso.box.ImageSpatialExtentsBox;
-import com.homesoft.iso.box.ItemInfoEntry;
-import com.homesoft.iso.box.ItemInfoBox;
-import com.homesoft.iso.box.ItemLocation;
-import com.homesoft.iso.box.ItemLocationBox;
-import com.homesoft.iso.box.ItemPropertyAssociation;
-import com.homesoft.iso.box.ItemPropertyAssociationBox;
-import com.homesoft.iso.box.ItemReferenceBox;
-import com.homesoft.iso.box.PrimaryItemParser;
-import com.homesoft.iso.box.SingleItemTypeReference;
-import com.homesoft.iso.box.StringBox;
+import com.homesoft.iso.reader.Av1DecoderConfigReader;
+import com.homesoft.iso.reader.CodecSpecificData;
+import com.homesoft.iso.reader.BaseBoxContainer;
+import com.homesoft.iso.reader.ExtentReader;
+import com.homesoft.iso.reader.FileTypeReader;
+import com.homesoft.iso.reader.HevcDecoderConfigReader;
+import com.homesoft.iso.reader.ImageSpatialExtents;
+import com.homesoft.iso.reader.ImageSpatialExtentsReader;
+import com.homesoft.iso.reader.ItemInfoEntry;
+import com.homesoft.iso.reader.ItemInfoReader;
+import com.homesoft.iso.reader.ItemLocation;
+import com.homesoft.iso.reader.ItemLocationReader;
+import com.homesoft.iso.reader.ItemPropertyAssociation;
+import com.homesoft.iso.reader.ItemPropertyAssociationReader;
+import com.homesoft.iso.reader.ItemReferenceReader;
+import com.homesoft.iso.reader.PrimaryItemParser;
+import com.homesoft.iso.reader.RootContainerReader;
+import com.homesoft.iso.reader.SingleItemTypeReference;
+import com.homesoft.iso.reader.StringReader;
 import com.homesoft.iso.listener.CompositeListener;
 import com.homesoft.iso.listener.ListListener;
 import com.homesoft.iso.listener.AnnotationListener;
@@ -44,50 +45,58 @@ public class Heif implements BoxTypes {
     private static final int TYPE_iref_list = TYPE_iref | Integer.MIN_VALUE;
     private static final int TYPE_iinf_list = TYPE_iinf | Integer.MIN_VALUE;
     private static final Object[] EMPTY_ARRAY = new Object[0];
-    public static final ContainerBox ROOT_PARSER = new BaseContainerBox()
-            .addParser(new FileTypeBox())
-            .addParser(TYPE_meta, new BaseContainerBox(true)
-                    .addParser(TYPE_pitm, new PrimaryItemParser())
-                    .addParser(TYPE_iinf, new ItemInfoBox())
-                    .addParser(new ItemLocationBox())
-                    .addParser(TYPE_iref, new ItemReferenceBox())
-                    .addParser(TYPE_irpr, new BaseContainerBox()
-                            .addParser(new ItemPropertyAssociationBox())
-                            .addParser(TYPE_ipco, new BaseContainerBox()
-                                    .addParser(new ImageSpatialExtentsBox())
-                                    .addParser(new HevcDecoderConfigBox())
-                                    .addParser(new Av1DecoderConfigBox())
-                                    .addParser(TYPE_AUXC, new StringBox(true))
-                                    .addParser(BaseContainerBox.TYPE_DEFAULT, new ExtentBox())
+
+    private static final RootContainerReader ROOT = new RootContainerReader();
+
+    public static final IsoParser PARSER = new IsoParser(
+            ROOT
+                    .addParser(new FileTypeReader())
+                    .addParser(TYPE_meta, new FullBoxContainer()
+                            .addParser(TYPE_pitm, new PrimaryItemParser())
+                            .addParser(TYPE_iinf, new ItemInfoReader())
+                            .addParser(new ItemLocationReader())
+                            .addParser(TYPE_iref, new ItemReferenceReader(ROOT))
+                            .addParser(TYPE_irpr, new BaseBoxContainer()
+                                    .addParser(new ItemPropertyAssociationReader())
+                                    .addParser(TYPE_ipco, new BaseBoxContainer()
+                                            .addParser(new ImageSpatialExtentsReader())
+                                            .addParser(new HevcDecoderConfigReader())
+                                            .addParser(new Av1DecoderConfigReader())
+                                            .addParser(TYPE_AUXC, new StringReader(true))
+                                            .addParser(BaseBoxContainer.TYPE_DEFAULT, new ExtentReader())
+                                    )
                             )
                     )
-            );
+    );
 
-    public static IsoParser<Heif> getParser() {
+    public static Heif parse(File file) throws IOException {
+        return parse(IsoParser.getFileChannelReader(file));
+    }
+
+    public static Heif parse(StreamReader streamReader) throws IOException {
         final Work work = new Work();
         final AnnotationListener annotationListener = new AnnotationListener(work);
         final CompositeListener compositeListener = new CompositeListener(annotationListener);
         compositeListener.add(new ListListener(annotationListener, TYPE_iinf, TYPE_iinf_list));
         compositeListener.add(new ListListener(annotationListener, TYPE_ipco, TYPE_ipco_list));
         compositeListener.add(new ListListener(annotationListener, TYPE_iref, TYPE_iref_list));
-        return new IsoParser<Heif>(ROOT_PARSER, compositeListener) {
-            @Override
-            public Heif parse(@NonNull StreamReader streamReader) throws IOException {
-                parseImpl(streamReader);
-                return new Heif(work);
-            }
-        };
+
+        PARSER.parse(streamReader, compositeListener);
+        return new Heif(work);
     }
 
     public static void main(String[] args) {
         final File file = new File("C:\\Users\\dburc\\Pictures\\heic\\20230907_162647.heic");
         try {
-            final IsoParser<Heif> heifIsoParser = getParser();
-            final Heif heif = heifIsoParser.parse(file);
+            final Heif heif = parse(file);
             System.out.println(heif);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static void dump(File file) throws Exception {
+        System.out.println(PARSER.dump(file));
     }
 
     private final int primaryItemId;
@@ -190,7 +199,7 @@ public class Heif implements BoxTypes {
         final Object[] properties = getProperties(itemInfoEntry.id);
         List<Image> imageList = Collections.emptyList();
         for (SingleItemTypeReference reference : itemReferences) {
-            if (reference.type == ItemReferenceBox.TYPE_DIMG && reference.fromId == itemInfoEntry.id) {
+            if (reference.type == ItemReferenceReader.TYPE_DIMG && reference.fromId == itemInfoEntry.id) {
                 final int[] imageIds = reference.getToIds();
                 imageList = new ArrayList<>(imageIds.length);
                 for (int imageId : imageIds) {

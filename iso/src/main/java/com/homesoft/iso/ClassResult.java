@@ -7,7 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This method will be called when {@link Box#read(BoxHeader, StreamReader, int)} returns
+ * This method will be called when {@link BoxReader#read(Box, StreamReader, int)} returns
  * a {@link Class} instance that matches this method's parameter.
  * The convention for this would be set<i>SimpleClassName</i>(...)
  */

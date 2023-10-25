@@ -9,12 +9,20 @@ import com.homesoft.iso.TypedParseListener;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 
+/**
+ * A {@link ParseListener} that delegates a {@link com.homesoft.iso.BoxContainer} and it's children to
+ * another {@link ParseListener}
+ */
 public class CompositeListener implements ParseListener {
     private final HashMap<Integer, TypedParseListener> typeMap = new HashMap<>();
 
     private final ArrayDeque<TypedParseListener> stack = new ArrayDeque<>();
 
-    public CompositeListener(ParseListener defaultListener) {
+    /**
+     *
+     * @param defaultListener The listener that receives all output
+     */
+    public CompositeListener(@NonNull ParseListener defaultListener) {
         final TypedProxyListener typedProxyListener;
         if (defaultListener instanceof TypedProxyListener) {
             typedProxyListener = (TypedProxyListener) defaultListener;
@@ -42,14 +50,14 @@ public class CompositeListener implements ParseListener {
     }
 
     @Override
-    public void onContainerStart(int type, Object result) {
+    public void onContainerStart(int type) {
         TypedParseListener typedParseListener = typeMap.get(type);
         if (typedParseListener != null) {
             stack.push(typedParseListener);
         } else {
             typedParseListener = peek();
         }
-        typedParseListener.onContainerStart(type, result);
+        typedParseListener.onContainerStart(type);
     }
 
     @Override

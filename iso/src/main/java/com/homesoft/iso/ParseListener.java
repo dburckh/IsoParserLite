@@ -1,12 +1,12 @@
 package com.homesoft.iso;
 
 public interface ParseListener {
-    void onContainerStart(int type, Object result);
+    void onContainerStart(int type);
 
     /**
      * Called after a Box has been parsed
      * @param type the box that was just parsed
-     * @param result the result of {@link Box#read(BoxHeader, StreamReader, int)}
+     * @param result the result of {@link BoxReader#read(Box, StreamReader)}
      */
     void onParsed(int type, Object result);
 
@@ -17,8 +17,8 @@ public interface ParseListener {
 
     /**
      * This will cause parsing to stop.
-     * Called after {@link #onParsed(int, Object)} for {@link Box} or
-     * after {@link #onContainerEnd(int) for {@link ContainerBox }}
+     * Called after {@link #onParsed(int, Object)} for {@link BoxReader} or
+     * after {@link #onContainerEnd(int) for {@link BoxContainer }}
      * @return true to stop parsing, false to continue
      */
     boolean isCancelled();

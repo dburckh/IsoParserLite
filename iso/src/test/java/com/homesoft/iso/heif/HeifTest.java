@@ -1,9 +1,9 @@
 package com.homesoft.iso.heif;
 
 import com.homesoft.iso.Heif;
-import com.homesoft.iso.box.Av1DecoderConfig;
-import com.homesoft.iso.box.HevcDecoderConfig;
-import com.homesoft.iso.box.ImageSpatialExtents;
+import com.homesoft.iso.reader.Av1DecoderConfig;
+import com.homesoft.iso.reader.HevcDecoderConfig;
+import com.homesoft.iso.reader.ImageSpatialExtents;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -22,7 +22,7 @@ public class HeifTest {
 
     @Test
     public void parseHeic() throws IOException  {
-        Heif heic = Heif.getParser().parse(getHeicFile());
+        Heif heic = Heif.parse(getHeicFile());
         Heif.Item item = heic.getPrimaryItem();
 
         Heif.Grid grid = (Heif.Grid)item;
@@ -42,7 +42,7 @@ public class HeifTest {
 
     @Test
     public void parseAvif() throws IOException  {
-        Heif avif = Heif.getParser().parse(getAvifFile());
+        Heif avif = Heif.parse(getAvifFile());
         Heif.Item item = avif.getPrimaryItem();
 
         Heif.Grid grid = (Heif.Grid)item;

@@ -3,31 +3,31 @@ package com.homesoft.iso;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.homesoft.iso.box.AudioSampleEntryBox;
-import com.homesoft.iso.box.Av1DecoderConfigBox;
-import com.homesoft.iso.box.AvcDecoderConfigBox;
-import com.homesoft.iso.box.CompactSampleSizeBox;
-import com.homesoft.iso.box.Data;
-import com.homesoft.iso.box.DataBox;
-import com.homesoft.iso.box.ESDescriptorBox;
-import com.homesoft.iso.box.FileTypeBox;
-import com.homesoft.iso.box.BaseContainerBox;
-import com.homesoft.iso.box.GPSCoordinates;
-import com.homesoft.iso.box.GPSCoordinatesBox;
-import com.homesoft.iso.box.HandlerBox;
-import com.homesoft.iso.box.Header;
-import com.homesoft.iso.box.HevcDecoderConfigBox;
-import com.homesoft.iso.box.IntArrayBox;
-import com.homesoft.iso.box.LongArrayBox;
-import com.homesoft.iso.box.MediaHeaderBox;
-import com.homesoft.iso.box.MovieHeaderBox;
-import com.homesoft.iso.box.PixelAspectRatioBox;
-import com.homesoft.iso.box.RootContainerBox;
-import com.homesoft.iso.box.SampleDescriptionBox;
-import com.homesoft.iso.box.SampleSizeBox;
-import com.homesoft.iso.box.SetIndex;
-import com.homesoft.iso.box.TrackHeaderBox;
-import com.homesoft.iso.box.VisualSampleEntryBox;
+import com.homesoft.iso.reader.AudioSampleEntryReader;
+import com.homesoft.iso.reader.Av1DecoderConfigReader;
+import com.homesoft.iso.reader.AvcDecoderConfigReader;
+import com.homesoft.iso.reader.CompactSampleSizeReader;
+import com.homesoft.iso.reader.Data;
+import com.homesoft.iso.reader.DataReader;
+import com.homesoft.iso.reader.ESDescriptorReader;
+import com.homesoft.iso.reader.FileTypeReader;
+import com.homesoft.iso.reader.BaseBoxContainer;
+import com.homesoft.iso.reader.GPSCoordinates;
+import com.homesoft.iso.reader.GPSCoordinatesReader;
+import com.homesoft.iso.reader.HandlerReader;
+import com.homesoft.iso.reader.Header;
+import com.homesoft.iso.reader.HevcDecoderConfigReader;
+import com.homesoft.iso.reader.IntArrayReader;
+import com.homesoft.iso.reader.LongArrayReader;
+import com.homesoft.iso.reader.MediaHeaderReader;
+import com.homesoft.iso.reader.MovieHeaderReader;
+import com.homesoft.iso.reader.PixelAspectRatioReader;
+import com.homesoft.iso.reader.RootContainerReader;
+import com.homesoft.iso.reader.SampleDescriptionReader;
+import com.homesoft.iso.reader.SampleSizeReader;
+import com.homesoft.iso.reader.SetIndex;
+import com.homesoft.iso.reader.TrackHeaderReader;
+import com.homesoft.iso.reader.VisualSampleEntryReader;
 import com.homesoft.iso.listener.CompositeListener;
 import com.homesoft.iso.listener.HierarchyListener;
 import com.homesoft.iso.listener.IListListener;
@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class Movie implements BoxTypes {
     public final static long MS_B4_1904;
-    public final static ContainerBox ROOT_CONTAINER;
+    public final static IsoParser PARSER;
 
     static {
         Calendar calendar = GregorianCalendar.getInstance();
@@ -56,64 +56,65 @@ public class Movie implements BoxTypes {
         calendar.set(1904, Calendar.JANUARY, 1);
         MS_B4_1904 = calendar.getTimeInMillis();
 
-        final RootContainerBox root = new RootContainerBox();
-        final MovieHeaderBox movieHeaderBox = new MovieHeaderBox();
-        final HandlerBox handlerBox = new HandlerBox();
-        final BaseContainerBox setIndexBox = new BaseContainerBox()
-                .addParser(TYPE_data, new DataBox(Data.SET_INDEX));
+        final RootContainerReader root = new RootContainerReader();
+        final MovieHeaderReader movieHeaderReader = new MovieHeaderReader();
+        final HandlerReader handlerReader = new HandlerReader();
+        final BaseBoxContainer setIndexBox = new BaseBoxContainer()
+                .addParser(TYPE_data, new DataReader(Data.SET_INDEX));
 
-        ROOT_CONTAINER = root
-                .addParser(new FileTypeBox())
-                .addParser(TYPE_moov, new BaseContainerBox()
-                        .addParser(movieHeaderBox)
-                        .addParser(TYPE_trak, new BaseContainerBox()
-                                .addParser(new TrackHeaderBox(root, movieHeaderBox))
-                                .addParser(TYPE_mdia, new BaseContainerBox()
-                                        .addParser(new MediaHeaderBox())
-                                        .addParser(handlerBox)
-                                        .addParser(TYPE_minf, new BaseContainerBox()
-                                                .addParser(TYPE_stbl, new BaseContainerBox()
-                                                        .addParser(new SampleSizeBox())
-                                                        .addParser(new CompactSampleSizeBox())
-                                                        .addParser(BoxTypes.TYPE_stco, new IntArrayBox(true))
-                                                        .addParser(BoxTypes.TYPE_co64, new LongArrayBox(true))
-                                                        .addParser(TYPE_stsd, new SampleDescriptionBox(root, handlerBox)
-                                                                // VIDEO and SOUND are hacks to support generic types
-                                                                .addParser(HandlerBox.VIDEO, new VisualSampleEntryBox()
-                                                                        .addParser(new HevcDecoderConfigBox())
-                                                                        .addParser(new Av1DecoderConfigBox())
-                                                                        .addParser(new PixelAspectRatioBox())
-                                                                        .addParser(TYPE_avcC, new AvcDecoderConfigBox())
-                                                                )
-                                                                .addParser(HandlerBox.SOUND, new AudioSampleEntryBox()
-                                                                        .addParser(new ESDescriptorBox())
+        PARSER = new IsoParser(
+                root
+                        .addParser(new FileTypeReader())
+                        .addParser(TYPE_moov, new BaseBoxContainer()
+                                .addParser(movieHeaderReader)
+                                .addParser(TYPE_trak, new BaseBoxContainer()
+                                        .addParser(new TrackHeaderReader(root, movieHeaderReader))
+                                        .addParser(TYPE_mdia, new BaseBoxContainer()
+                                                .addParser(new MediaHeaderReader())
+                                                .addParser(handlerReader)
+                                                .addParser(TYPE_minf, new BaseBoxContainer()
+                                                        .addParser(TYPE_stbl, new BaseBoxContainer()
+                                                                .addParser(new SampleSizeReader())
+                                                                .addParser(new CompactSampleSizeReader())
+                                                                .addParser(BoxTypes.TYPE_stco, new IntArrayReader())
+                                                                .addParser(BoxTypes.TYPE_co64, new LongArrayReader())
+                                                                .addParser(TYPE_stsd, new SampleDescriptionReader(root, handlerReader)
+                                                                        // VIDEO and SOUND are hacks to support generic types
+                                                                        .addParser(HandlerReader.VIDEO, new VisualSampleEntryReader()
+                                                                                .addParser(new HevcDecoderConfigReader())
+                                                                                .addParser(new Av1DecoderConfigReader())
+                                                                                .addParser(new PixelAspectRatioReader())
+                                                                                .addParser(TYPE_avcC, new AvcDecoderConfigReader())
+                                                                        )
+                                                                        .addParser(HandlerReader.SOUND, new AudioSampleEntryReader()
+                                                                                .addParser(new ESDescriptorReader())
+                                                                        )
                                                                 )
                                                         )
                                                 )
                                         )
                                 )
-                        )
-                        .addParser(TYPE_udta, new BaseContainerBox()
-                                .addParser(TYPE_meta, new BaseContainerBox(true)
-                                        .addParser(new HandlerBox())
-                                        .addParser(TYPE_ilst, new BaseContainerBox()
-                                                .addParser(TYPE_gnre, new BaseContainerBox()
-                                                        .addParser(TYPE_data, new DataBox(Data.BE_UNSIGNED))
-                                                )
-                                                .addParser(TYPE_trkn, setIndexBox)
-                                                .addParser(TYPE_disk, setIndexBox)
-                                                .addParser(BaseContainerBox.TYPE_DEFAULT, new BaseContainerBox()
-                                                        .addParser(new DataBox())
-                                                )
-                                                .addParser(TYPE_Axyz, new BaseContainerBox()
-                                                        .addParser(TYPE_data, new GPSCoordinatesBox())
+                                .addParser(TYPE_udta, new BaseBoxContainer()
+                                        .addParser(TYPE_meta, new FullBoxContainer()
+                                                .addParser(new HandlerReader())
+                                                .addParser(TYPE_ilst, new BaseBoxContainer()
+                                                        .addParser(TYPE_gnre, new BaseBoxContainer()
+                                                                .addParser(TYPE_data, new DataReader(Data.BE_UNSIGNED))
+                                                        )
+                                                        .addParser(TYPE_trkn, setIndexBox)
+                                                        .addParser(TYPE_disk, setIndexBox)
+                                                        .addParser(BaseBoxContainer.TYPE_DEFAULT, new BaseBoxContainer()
+                                                                .addParser(new DataReader())
+                                                        )
+                                                        .addParser(TYPE_Axyz, new BaseBoxContainer()
+                                                                .addParser(TYPE_data, new GPSCoordinatesReader())
+                                                        )
                                                 )
                                         )
+                                        .addParser(TYPE_Axyz, new GPSCoordinatesReader())
                                 )
-                                .addParser(TYPE_Axyz, new GPSCoordinatesBox())
                         )
-                );
-
+        );
     }
 
     public static long toJavaTime(long time) {
@@ -141,30 +142,31 @@ public class Movie implements BoxTypes {
         final File file = new File(path);
         try {
             //System.out.println(getDumpParser().parse(file));
-            Movie movie = getParser().parse(file);
+            Movie movie = parse(file);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static IsoParser<Movie> getParser() {
+
+    public static Movie parse(File file) throws IOException {
+        return parse(IsoParser.getFileChannelReader(file));
+    }
+
+    public static Movie parse(StreamReader streamReader) throws IOException {
         final AnnotationListener annotationListener = new AnnotationListener();
         final CompositeListener compositeListener = new CompositeListener(annotationListener);
         final Work work = new Work(annotationListener);
         annotationListener.add(work);
         compositeListener.add(new IListListener(annotationListener));
         compositeListener.add(new TrackListener(annotationListener));
-        return new IsoParser<Movie>(ROOT_CONTAINER, compositeListener) {
-            @Override
-            public Movie parse(@NonNull StreamReader streamReader) throws IOException {
-                parseImpl(streamReader);
-                return new Movie(work);
-            }
-        };
+
+        PARSER.parse(streamReader, compositeListener);
+        return new Movie(work);
     }
 
-    public static void dump(File file) throws Exception {
-        System.out.println(new StringParser(ROOT_CONTAINER, new HierarchyListener(BoxTypes.TYPE_moov)).parse(file));
+    public static void dump(File file) throws IOException {
+        System.out.println(PARSER.dump(file));
     }
 
     static String getString(Data data) {

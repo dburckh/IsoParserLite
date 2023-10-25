@@ -3,18 +3,17 @@ package com.homesoft.iso.heif;
 import com.homesoft.iso.FileChannelReader;
 import com.homesoft.iso.IsoParser;
 import com.homesoft.iso.Movie;
-import com.homesoft.iso.box.AudioSampleEntry;
-import com.homesoft.iso.box.DecoderConfigDescriptor;
-import com.homesoft.iso.box.VisualSampleEntry;
+import com.homesoft.iso.reader.AudioSampleEntry;
+import com.homesoft.iso.reader.DecoderConfigDescriptor;
+import com.homesoft.iso.reader.VisualSampleEntry;
 import com.homesoft.iso.listener.TrackListener;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
-
-import javax.swing.plaf.basic.BasicSliderUI;
 
 public class MovieTest {
     private static final int VP09 = 0x76703039;
@@ -27,9 +26,8 @@ public class MovieTest {
 
     @Test
     public void parseSong() throws Exception {
-        IsoParser<Movie> parser = Movie.getParser();
         FileChannelReader fileChannelReader = IsoParser.getFileChannelReader(getSongFile());
-        Movie movie = parser.parse(fileChannelReader);
+        Movie movie = Movie.parse(fileChannelReader);
 
         Movie.MediaMeta mediaMeta = movie.getMediaMeta();
         Assert.assertEquals("I Am A Man Of Constant Sorrow", mediaMeta.getName());
@@ -52,9 +50,8 @@ public class MovieTest {
 
     @Test
     public void parseVideo() throws Exception {
-        IsoParser<Movie> parser = Movie.getParser();
         FileChannelReader fileChannelReader = IsoParser.getFileChannelReader(getVideoFile());
-        Movie movie = parser.parse(fileChannelReader);
+        Movie movie = Movie.parse(fileChannelReader);
 
         List<TrackListener.Track> trackList = movie.getTrackList();
         TrackListener.AudioTrack audioTrack = null;
@@ -89,5 +86,11 @@ public class MovieTest {
         Assert.assertNotNull(movie.getGpsCoordinates());
 
         System.out.println("Blocks Read: " + fileChannelReader.getBlocksRead());
+    }
+
+    @Test
+    public void dumpToString() throws IOException {
+        final String s = Movie.PARSER.dump(getVideoFile());
+        Assert.assertTrue(s.indexOf("vp09=VisualSampleEntry{dataReferenceIndex=1, width=1080, height=1920}") > 0);
     }
 }

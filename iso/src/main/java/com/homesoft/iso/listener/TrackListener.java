@@ -6,19 +6,22 @@ import androidx.annotation.Nullable;
 import com.homesoft.iso.BoxTypes;
 import com.homesoft.iso.ParseListener;
 import com.homesoft.iso.TypedParseListener;
-import com.homesoft.iso.box.AudioSampleEntry;
-import com.homesoft.iso.box.DecoderConfigDescriptor;
-import com.homesoft.iso.box.HandlerBox;
-import com.homesoft.iso.box.IntArray;
-import com.homesoft.iso.box.LongArray;
-import com.homesoft.iso.box.PixelAspectRatio;
-import com.homesoft.iso.box.SampleEntry;
-import com.homesoft.iso.box.TrackHeader;
-import com.homesoft.iso.box.VisualSampleEntry;
+import com.homesoft.iso.reader.AudioSampleEntry;
+import com.homesoft.iso.reader.DecoderConfigDescriptor;
+import com.homesoft.iso.reader.HandlerReader;
+import com.homesoft.iso.reader.IntArray;
+import com.homesoft.iso.reader.LongArray;
+import com.homesoft.iso.reader.PixelAspectRatio;
+import com.homesoft.iso.reader.SampleEntry;
+import com.homesoft.iso.reader.TrackHeader;
+import com.homesoft.iso.reader.VisualSampleEntry;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
+/**
+ * Wraps the trck Box hierarchy as a flat Object
+ */
 public class TrackListener implements TypedParseListener {
     public static final int TYPE_TRACK = BoxTypes.TYPE_trak & Integer.MIN_VALUE;
 
@@ -46,11 +49,7 @@ public class TrackListener implements TypedParseListener {
     }
 
     @Override
-    public void onContainerStart(int type, Object result) {
-        if (result instanceof SampleEntry) {
-            fourCC = type;
-            sampleEntry = (SampleEntry) result;
-        }
+    public void onContainerStart(int type) {
     }
 
     @Override
@@ -63,6 +62,9 @@ public class TrackListener implements TypedParseListener {
             decoderConfigDescriptor = (DecoderConfigDescriptor) result;
         } else if (result instanceof PixelAspectRatio) {
             pixelAspectRatio = (PixelAspectRatio) result;
+        } else if (result instanceof SampleEntry) {
+            fourCC = type;
+            sampleEntry = (SampleEntry) result;
         } else {
             switch (type) {
                 case BoxTypes.TYPE_stco:
@@ -82,9 +84,9 @@ public class TrackListener implements TypedParseListener {
         if (type == getType()) {
             Track track;
             if (trackHeader != null && handler != null) {
-                if (handler == HandlerBox.SOUND) {
+                if (handler == HandlerReader.SOUND) {
                     track = new AudioTrack(trackHeader, this);
-                } else if (handler == HandlerBox.VIDEO) {
+                } else if (handler == HandlerReader.VIDEO) {
                     track = new VideoTrack(trackHeader, this);
                 } else {
                     track = new Track(trackHeader, handler, this);
@@ -184,7 +186,7 @@ public class TrackListener implements TypedParseListener {
         protected PixelAspectRatio pixelAspectRatio;
 
         VideoTrack(@NonNull TrackHeader trackHeader, TrackListener trackListener) {
-            super(trackHeader, HandlerBox.VIDEO, trackListener);
+            super(trackHeader, HandlerReader.VIDEO, trackListener);
             this.pixelAspectRatio = trackListener.pixelAspectRatio;
         }
 
@@ -212,7 +214,7 @@ public class TrackListener implements TypedParseListener {
     }
     public static class AudioTrack extends Track {
         AudioTrack(@NonNull TrackHeader trackHeader, TrackListener trackListener) {
-            super(trackHeader, HandlerBox.SOUND, trackListener);
+            super(trackHeader, HandlerReader.SOUND, trackListener);
         }
 
         @Nullable
