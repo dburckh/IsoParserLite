@@ -1,63 +1,66 @@
 package com.homesoft.iso.listener;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.homesoft.iso.BoxTypes;
 import com.homesoft.iso.ParseListener;
-import com.homesoft.iso.TypedParseListener;
 
-import java.util.ArrayDeque;
 import java.util.HashMap;
 
 /**
  * A {@link ParseListener} that delegates a {@link com.homesoft.iso.BoxContainer} and it's children to
- * another {@link ParseListener}
+ * another {@link ParseListener}.
+ * This class does not directly support nesting delegates.  Nesting can be supported by multiple
+ * CompositeListener instance nested in each other.
  */
-public class CompositeListener implements ParseListener {
-    private final HashMap<Integer, TypedParseListener> typeMap = new HashMap<>();
+public class CompositeListener extends ProxyListener {
+    private final HashMap<Integer, ProxyListener> typeMap = new HashMap<>();
 
-    private final ArrayDeque<TypedParseListener> stack = new ArrayDeque<>();
+    @Nullable
+    private ParseListener delegate;
+    private int delegateType = BoxTypes.TYPE_NA;
+
+    public CompositeListener(@NonNull ParseListener parseListener) {
+        super(parseListener);
+    }
+
+    public void add(ProxyListener proxyListener, int type) {
+        typeMap.put(type, proxyListener);
+    }
 
     /**
-     *
-     * @param defaultListener The listener that receives all output
+     * Set the {@link ParseListener} for this class and all children
+     * @param parseListener
      */
-    public CompositeListener(@NonNull ParseListener defaultListener) {
-        final TypedProxyListener typedProxyListener;
-        if (defaultListener instanceof TypedProxyListener) {
-            typedProxyListener = (TypedProxyListener) defaultListener;
-        } else {
-            typedProxyListener = new TypedProxyListener(defaultListener, BoxTypes.TYPE_NA);
+    @Override
+    public void setParseListener(@NonNull ParseListener parseListener) {
+        super.setParseListener(parseListener);
+        for (ProxyListener proxyListener : typeMap.values()) {
+            proxyListener.setParseListener(parseListener);
         }
-        stack.add(typedProxyListener);
-    }
-
-    public void add(TypedParseListener typedParseListener) {
-        typeMap.put(typedParseListener.getType(), typedParseListener);
-    }
-
-    public void add(ParseListener parseListener, int type) {
-        add(new TypedProxyListener(parseListener, type));
     }
 
     @NonNull
-    private TypedParseListener peek() {
-        TypedParseListener typedParseListener = stack.peek();
-        if (typedParseListener == null) {
-            throw new InternalError("Stack should never be empty");
+    private ParseListener peek() {
+        if (delegate == null) {
+            return getParseListener();
+        } else {
+            return delegate;
         }
-        return typedParseListener;
     }
 
     @Override
     public void onContainerStart(int type) {
-        TypedParseListener typedParseListener = typeMap.get(type);
-        if (typedParseListener != null) {
-            stack.push(typedParseListener);
+        ParseListener parseListener = typeMap.get(type);
+        if (parseListener == null) {
+            parseListener = peek();
         } else {
-            typedParseListener = peek();
+            assert delegate == null;
+            delegate = parseListener;
+            delegateType = type;
         }
-        typedParseListener.onContainerStart(type);
+        parseListener.onContainerStart(type);
     }
 
     @Override
@@ -67,10 +70,11 @@ public class CompositeListener implements ParseListener {
 
     @Override
     public void onContainerEnd(int type) {
-        final TypedParseListener typedParseListener = peek();
+        final ParseListener typedParseListener = peek();
         typedParseListener.onContainerEnd(type);
-        if (typedParseListener.getType() == type) {
-            stack.pop();
+        if (delegateType == type) {
+            delegateType = BoxTypes.TYPE_NA;
+            delegate = null;
         }
     }
 

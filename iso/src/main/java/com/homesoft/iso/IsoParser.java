@@ -35,7 +35,7 @@ public class IsoParser {
         parse(getFileChannelReader(file), parseListener);
     }
 
-    protected void parse(StreamReader streamReader, ParseListener parseListener) throws IOException {
+    public void parse(StreamReader streamReader, ParseListener parseListener) throws IOException {
         new ParseJob(streamReader, parseListener).parse(rootBoxContainer, getEnd(streamReader));
     }
 

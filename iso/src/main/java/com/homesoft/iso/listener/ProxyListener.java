@@ -1,13 +1,30 @@
 package com.homesoft.iso.listener;
 
+import androidx.annotation.NonNull;
+
 import com.homesoft.iso.ParseListener;
 
 public abstract class ProxyListener implements ParseListener {
-    private final ParseListener parseListener;
+    @NonNull
+    private ParseListener parseListener;
 
-    public ProxyListener(ParseListener parseListener) {
+    public ProxyListener() {
+        this(ParseListener.NULL);
+    }
+
+    public ProxyListener(@NonNull ParseListener parseListener) {
         this.parseListener = parseListener;
     }
+
+    public void setParseListener(@NonNull ParseListener parseListener) {
+        this.parseListener = parseListener;
+    }
+
+    @NonNull
+    public ParseListener getParseListener() {
+        return parseListener;
+    }
+
     @Override
     public void onContainerStart(int type) {
         parseListener.onContainerStart(type);

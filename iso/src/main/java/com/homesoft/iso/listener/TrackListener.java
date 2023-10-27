@@ -5,7 +5,7 @@ import androidx.annotation.Nullable;
 
 import com.homesoft.iso.BoxTypes;
 import com.homesoft.iso.ParseListener;
-import com.homesoft.iso.TypedParseListener;
+import com.homesoft.iso.Type;
 import com.homesoft.iso.reader.AudioSampleEntry;
 import com.homesoft.iso.reader.DecoderConfigDescriptor;
 import com.homesoft.iso.reader.HandlerReader;
@@ -22,10 +22,8 @@ import java.lang.reflect.Modifier;
 /**
  * Wraps the trck Box hierarchy as a flat Object
  */
-public class TrackListener implements TypedParseListener {
+public class TrackListener extends ProxyListener implements Type {
     public static final int TYPE_TRACK = BoxTypes.TYPE_trak & Integer.MIN_VALUE;
-
-    private final ParseListener parseListener;
 
     private transient TrackHeader trackHeader;
     private transient Integer handler;
@@ -45,7 +43,7 @@ public class TrackListener implements TypedParseListener {
     protected transient PixelAspectRatio pixelAspectRatio;
 
     public TrackListener(@NonNull ParseListener parseListener) {
-        this.parseListener = parseListener;
+        super(parseListener);
     }
 
     @Override
@@ -94,7 +92,7 @@ public class TrackListener implements TypedParseListener {
             } else {
                 track = null;
             }
-            parseListener.onParsed(TYPE_TRACK, track);
+            super.onParsed(TYPE_TRACK, track);
             clear();
         }
     }

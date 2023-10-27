@@ -4,7 +4,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.homesoft.iso.reader.BaseBoxContainer;
+import com.homesoft.iso.reader.ByteArrayReader;
 import com.homesoft.iso.reader.CompactSampleSizeReader;
+import com.homesoft.iso.reader.Extent;
 import com.homesoft.iso.reader.ExtentReader;
 import com.homesoft.iso.reader.FileTypeReader;
 import com.homesoft.iso.reader.HandlerReader;
@@ -96,7 +98,7 @@ public class CanonRaw3 implements BoxTypes {
                         .addParser(PRVW_UUID, new PreviewContainerReader()
                                 .addParser(new PreviewReader())
                         )
-                        .addParser(XMP_UUID, new UUIDBox(new StringReader(false)))
+                        .addParser(XMP_UUID, new UUIDBox(new ByteArrayReader(false)))
         );
     }
 
@@ -117,11 +119,10 @@ public class CanonRaw3 implements BoxTypes {
     }
 
     public static CanonRaw3 parse(StreamReader streamReader) throws IOException {
-        final AnnotationListener annotationListener = new AnnotationListener();
-        final CompositeListener compositeListener = new CompositeListener(annotationListener);
         final Work work = new Work();
-        annotationListener.add(work);
-        compositeListener.add(new TrackListener(annotationListener));
+        final CompositeListener compositeListener = new CompositeListener(work);
+        final TrackListener trackListener = new TrackListener(work);
+        compositeListener.add(trackListener, trackListener.getType());
         PARSER.parse(streamReader, compositeListener);
         return new CanonRaw3(work);
     }
@@ -139,7 +140,7 @@ public class CanonRaw3 implements BoxTypes {
         return work.preview;
     }
 
-    public String getXmp() {
+    public byte[] getXmp() {
         return work.xmp;
     }
 
@@ -169,29 +170,12 @@ public class CanonRaw3 implements BoxTypes {
     }
 
     public ImageExtent getBestImageTrack(short type) {
-        ImageExtent imageExtent = null;
-        for (TrackListener.Track track : work.trackList) {
-            if (track instanceof TrackListener.VideoTrack) {
-                final TrackListener.VideoTrack videoTrack = (TrackListener.VideoTrack) track;
-                if (getImageType(videoTrack) == type) {
-                    final ImageExtent candidate = getImageExtent(videoTrack);
-                    if (ImageExtent.COMPARATOR.compare(candidate, imageExtent) > 0) {
-                        imageExtent = candidate;
-                    }
-                }
-            }
-        }
-        return imageExtent;
+        return work.getBestImageTrack(type);
     }
 
     public ImageExtent getBestJpeg() {
-        ImageExtent previewImage = work.preview;
-        ImageExtent trackImage = getBestImageTrack(CRawVisualSampleEntry.IMAGE_TYPE_JPEG);
-        if (ImageExtent.COMPARATOR.compare(previewImage, trackImage) < 0) {
-            return trackImage;
-        } else {
-            return previewImage;
-        }
+        return ImageExtent.getBestImage(work.preview,
+                getBestImageTrack(CRawVisualSampleEntry.IMAGE_TYPE_JPEG));
     }
 
     public long getCreationTime() {
@@ -206,33 +190,88 @@ public class CanonRaw3 implements BoxTypes {
         return work.trackList.get(index);
     }
 
-    public static class Work {
-        @TypeResult(BoxTypes.TYPE_mvhd)
-        Header movieHeader;
+    public static class Work implements ParseListener {
+        public Header movieHeader;
 
-        @TypeResult(ThumbnailReader.TYPE_THMB)
-        ImageExtent thumbnail;
+        public ImageExtent thumbnail;
 
-        String xmp;
+        public byte[] xmp;
 
-        @TypeResult(PreviewReader.TYPE_PRVW)
-        ImageExtent preview;
+        public ImageExtent preview;
 
-        private final ArrayList<TrackListener.Track> trackList = new ArrayList<>();
+        public Extent cmt1;
+        public Extent cmt2;
+        public Extent cmt3;
+        public Extent cmt4;
 
-        @ClassResult({TrackListener.VideoTrack.class, TrackListener.AudioTrack.class})
-        public void setTrackHeader(TrackListener.Track track) {
-            trackList.add(track);
+        public final ArrayList<TrackListener.Track> trackList = new ArrayList<>();
+
+        public ImageExtent getBestImageTrack(short type) {
+            ImageExtent imageExtent = null;
+            for (TrackListener.Track track : trackList) {
+                if (track instanceof TrackListener.VideoTrack) {
+                    final TrackListener.VideoTrack videoTrack = (TrackListener.VideoTrack) track;
+                    if (getImageType(videoTrack) == type) {
+                        final ImageExtent candidate = getImageExtent(videoTrack);
+                        if (ImageExtent.COMPARATOR.compare(candidate, imageExtent) > 0) {
+                            imageExtent = candidate;
+                        }
+                    }
+                }
+            }
+            return imageExtent;
         }
+        @Override
+        public void onContainerStart(int type) {}
 
-        @TypeResult(BoxTypes.TYPE_uuid)
-        public void setUuidResult(UUIDResult uuidResult) {
-            if (uuidResult == null) {
+        @Override
+        public void onParsed(int type, Object result) {
+            if (result == null) {
                 return;
             }
-            if (uuidResult.getUuid().equals(ByteBuffer.wrap(CanonRaw3.XMP_UUID))) {
-                xmp = (String)uuidResult.result;
+            switch (type) {
+                case TrackListener.TYPE_TRACK:
+                    trackList.add((TrackListener.Track)result);
+                    break;
+                case BoxTypes.TYPE_uuid: {
+                    if (result instanceof UUIDResult) {
+                        UUIDResult uuidResult = (UUIDResult) result;
+                        if (uuidResult.getUuid().equals(ByteBuffer.wrap(CanonRaw3.XMP_UUID))) {
+                            xmp = (byte[]) uuidResult.result;
+                        }
+                    }
+                    break;
+                }
+                case BoxTypes.TYPE_mvhd:
+                    movieHeader = (Header) result;
+                    break;
+                case PreviewReader.TYPE_PRVW:
+                    preview = (ImageExtent) result;
+                    break;
+                case ThumbnailReader.TYPE_THMB:
+                    thumbnail = (ImageExtent) result;
+                    break;
+                case CanonRaw3.TYPE_CMT1:
+                    cmt1 = (Extent) result;
+                    break;
+                case CanonRaw3.TYPE_CMT2:
+                    cmt2 = (Extent) result;
+                    break;
+                case CanonRaw3.TYPE_CMT3:
+                    cmt3 = (Extent) result;
+                    break;
+                case CanonRaw3.TYPE_CMT4:
+                    cmt4 = (Extent) result;
+                    break;
             }
+        }
+
+        @Override
+        public void onContainerEnd(int type) {}
+
+        @Override
+        public boolean isCancelled() {
+            return false;
         }
     }
 }

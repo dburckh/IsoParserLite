@@ -1,22 +1,20 @@
 package com.homesoft.iso.reader;
 
+import androidx.annotation.Nullable;
+
 import com.homesoft.iso.Box;
-import com.homesoft.iso.BoxReader;
 import com.homesoft.iso.StreamReader;
 
 import java.io.IOException;
 
-public class StringReader implements BoxReader {
-    private final boolean fullBox;
+public class StringReader extends MaybeFullBox {
     public StringReader(boolean fullBox) {
-        this.fullBox = fullBox;
+        super(fullBox);
     }
 
+    @Nullable
     @Override
-    public String read(Box box, StreamReader streamReader) throws IOException {
-        if (fullBox) {
-            streamReader.getInt(); //versionFlags
-        }
+    protected String read(Box box, StreamReader streamReader, int versionFlags) throws IOException {
         return streamReader.getString();
     }
 }

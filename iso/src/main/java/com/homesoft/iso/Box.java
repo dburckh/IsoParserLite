@@ -40,7 +40,7 @@ public class Box {
         }
         if (type == BoxTypes.TYPE_uuid) {
             byteBuffer = StreamUtil.requireSharedBuffer(16, streamReader);
-            byte[] uuid = new byte[16];
+            byte[] uuid = new byte[UUIDBox.UUID_SIZE];
             byteBuffer.get(uuid);
             return new UUIDBox(size, type, uuid);
         } else {

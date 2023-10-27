@@ -22,4 +22,20 @@ public interface ParseListener {
      * @return true to stop parsing, false to continue
      */
     boolean isCancelled();
+
+    ParseListener NULL = new ParseListener() {
+        @Override
+        public void onContainerStart(int type) {}
+
+        @Override
+        public void onParsed(int type, Object result) {}
+
+        @Override
+        public void onContainerEnd(int type) {}
+
+        @Override
+        public boolean isCancelled() {
+            return true;
+        }
+    };
 }

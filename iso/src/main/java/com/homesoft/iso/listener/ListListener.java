@@ -17,9 +17,7 @@ import java.util.ArrayList;
  * <p>onParse(syntheticType, List&lt;Object&gt;)</p>
  * <p>onContainerEnd(containerType)</p>
  */
-public class ListListener implements TypedParseListener {
-    private final ParseListener parseListener;
-
+public class ListListener extends ProxyListener {
     private final int containerType;
     private final int syntheticType;
 
@@ -28,7 +26,7 @@ public class ListListener implements TypedParseListener {
     private int depth = -1;
 
     public ListListener(@NonNull ParseListener parseListener, int containerType, int syntheticType) {
-        this.parseListener = parseListener;
+        super(parseListener);
         this.containerType = containerType;
         this.syntheticType = syntheticType;
     }
@@ -39,7 +37,7 @@ public class ListListener implements TypedParseListener {
 
     @Override
     public void onContainerStart(int type) {
-        if (type == getType()) {
+        if (type == containerType) {
             depth = 0;
         } else if (depth >= 0) {
             depth++;
@@ -56,18 +54,8 @@ public class ListListener implements TypedParseListener {
     @Override
     public void onContainerEnd(int type) {
         if (depth == 0) {
-            parseListener.onParsed(syntheticType, list);
+            getParseListener().onParsed(syntheticType, list);
         }
         depth--;
-    }
-
-    @Override
-    public boolean isCancelled() {
-        return parseListener.isCancelled();
-    }
-
-    @Override
-    public int getType() {
-        return containerType;
     }
 }

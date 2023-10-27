@@ -158,8 +158,10 @@ public class Movie implements BoxTypes {
         final CompositeListener compositeListener = new CompositeListener(annotationListener);
         final Work work = new Work(annotationListener);
         annotationListener.add(work);
-        compositeListener.add(new IListListener(annotationListener));
-        compositeListener.add(new TrackListener(annotationListener));
+        final IListListener iListListener = new IListListener(annotationListener);
+        compositeListener.add(iListListener, iListListener.getType());
+        final TrackListener trackListener = new TrackListener(annotationListener);
+        compositeListener.add(trackListener, trackListener.getType());
 
         PARSER.parse(streamReader, compositeListener);
         return new Movie(work);

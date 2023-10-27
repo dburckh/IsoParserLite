@@ -20,6 +20,15 @@ public class ImageExtent extends Extent {
         }
         return rc;
     };
+
+    public static ImageExtent getBestImage(ImageExtent ie0, ImageExtent ie1) {
+        if (COMPARATOR.compare(ie0, ie1) > 0) {
+            return ie0;
+        } else {
+            return ie1;
+        }
+    }
+
     private final short type;
     private final short width;
     private final short height;

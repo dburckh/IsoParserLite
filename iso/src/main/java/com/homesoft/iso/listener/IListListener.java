@@ -2,7 +2,7 @@ package com.homesoft.iso.listener;
 
 import com.homesoft.iso.BoxTypes;
 import com.homesoft.iso.ParseListener;
-import com.homesoft.iso.TypedParseListener;
+import com.homesoft.iso.Type;
 
 /**
  * When used with a CompositeListener this flattens out the ilst container
@@ -10,13 +10,12 @@ import com.homesoft.iso.TypedParseListener;
  * input ilst{someTag{data{value}, ...}
  * output ilst{someTag{value}, ...}
  */
-public class IListListener implements TypedParseListener {
-    private final ParseListener delegate;
+public class IListListener extends ProxyListener implements Type {
 
     private int lastType;
 
     public IListListener(ParseListener listener) {
-        delegate = listener;
+        super(listener);
     }
 
     @Override
@@ -27,18 +26,13 @@ public class IListListener implements TypedParseListener {
     @Override
     public void onParsed(int type, Object result) {
         if (type == BoxTypes.TYPE_data) {
-            delegate.onParsed(lastType, result);
+            super.onParsed(lastType, result);
         }
     }
 
     @Override
     public void onContainerEnd(int type) {
         // Intentionally blank
-    }
-
-    @Override
-    public boolean isCancelled() {
-        return delegate.isCancelled();
     }
 
     @Override

@@ -39,7 +39,8 @@ public class CanonRaw3Test {
         TrackListener.Track track = cr3.getTrack(3);
         Assert.assertEquals(HandlerReader.META, track.getHandler());
 
-        Assert.assertTrue(cr3.getXmp().indexOf(XMP_NAMESPACE) >= 0);
+
+        Assert.assertTrue(new String(cr3.getXmp()).contains(XMP_NAMESPACE));
 
         Assert.assertEquals(1522460279000L, cr3.getCreationTime());
         Assert.assertEquals(1522460279000L, cr3.getModificationTime());
