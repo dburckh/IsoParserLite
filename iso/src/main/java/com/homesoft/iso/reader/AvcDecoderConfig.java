@@ -61,7 +61,7 @@ public class AvcDecoderConfig implements CodecSpecificData {
     }
 
     @Override
-    public List<TypedConfig> getCodecSpecificData() {
+    public List<TypedConfig> getTypedConfigList() {
         // Should always be a single SPS and PPS
         final ArrayList<TypedConfig> list = new ArrayList<>(2);
         addData(spsArray, TYPE_SPS, list);

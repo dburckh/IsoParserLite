@@ -14,6 +14,8 @@ public class ItemInfoEntry implements Type, Id {
 
     public static final int ITEM_TYPE_hvc1 = 0x68766331; // hvc1 - Standalone image
 
+    public static final String CONTENT_TYPE_XMP = "application/rdf+xml";
+
     public static final int ITEM_TYPE_NA = Integer.MIN_VALUE;
     public final int id;
 

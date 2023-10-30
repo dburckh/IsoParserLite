@@ -31,7 +31,7 @@ public class HevcDecoderConfig implements Type, CodecSpecificData {
     /**
      * Get the Codec Config in Byte Stream Format (H265 Appendix B)
      */
-    public List<TypedConfig> getCodecSpecificData() {
+    public List<TypedConfig> getTypedConfigList() {
         final ByteBuffer byteBuffer = ByteBuffer.wrap(bytes).asReadOnlyBuffer();
         // Skip the header
         byteBuffer.position(0x16);

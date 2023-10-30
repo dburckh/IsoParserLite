@@ -22,13 +22,15 @@ public class ItemLocation implements Id, Type {
         return extents.length;
     }
 
-    public long getExtentOffset(int index) {
-        return baseOffset + extents[index].offset;
+    @NonNull
+    public Extent getExtent(int index) {
+        final Extent extent = extents[index];
+        if (baseOffset == 0) {
+            return extent;
+        } else {
+            return new Extent(extent.offset + baseOffset, extent.size);
+        }
     }
-    public long getExtentLength(int index) {
-        return extents[index].size;
-    }
-
 
     ItemLocation(int id, short constructionMethod, short dataReferenceIndex, long baseOffset) {
         this.id = id;

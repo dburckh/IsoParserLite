@@ -12,6 +12,11 @@ import java.nio.ShortBuffer;
 import java.util.Arrays;
 
 public class SingleItemTypeReference implements Type {
+    public static final int TYPE_dimg = 0x64696D67; // derived image
+    public static final int TYPE_thmb = 0x74686D62; // thumbnail
+    public static final int TYPE_cdsc = 0x63647363; // metadata
+    public static final int TYPE_auxl = 0x6175786C; // Auxiliary Image
+
     public final int type;
     public final int fromId;
     private final Buffer toIdBuffer;
@@ -45,14 +50,21 @@ public class SingleItemTypeReference implements Type {
     public int getFromId() {
         return fromId;
     }
+
+    /**
+     * Get the reference toIds in order
+     */
     public int[] getToIds() {
+        int[] ids;
         if (toIdBuffer instanceof ShortBuffer) {
-            return toInts((ShortBuffer) toIdBuffer);
+            ids = toInts((ShortBuffer) toIdBuffer);
         } else if (toIdBuffer instanceof IntBuffer) {
-            return toInts((IntBuffer) toIdBuffer);
+            ids = toInts((IntBuffer) toIdBuffer);
         } else {
             return new int[0];
         }
+        Arrays.sort(ids);
+        return ids;
     }
 
     @Override

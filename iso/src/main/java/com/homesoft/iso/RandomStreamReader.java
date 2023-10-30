@@ -142,12 +142,11 @@ public abstract class RandomStreamReader implements StreamReader {
     @Override
     public byte[] getBytes(final int size) throws IOException {
         final byte[] buffer = new byte[size];
-        int pos = 0;
-        while (pos != size) {
-            ensureCapacity(1);
-            final int length = Math.min(size - pos, byteBuffer.remaining());
-            byteBuffer.get(buffer, pos, length);
-            pos += length;
+        if (byteBuffer.remaining() >= size) {
+            byteBuffer.get(buffer);
+        } else {
+            ByteBuffer readBuffer = ByteBuffer.wrap(buffer);
+            read(readBuffer);
         }
         return buffer;
     }

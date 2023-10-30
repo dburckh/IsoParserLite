@@ -8,9 +8,6 @@ public abstract class ProxyListener implements ParseListener {
     @NonNull
     private ParseListener parseListener;
 
-    public ProxyListener() {
-        this(ParseListener.NULL);
-    }
 
     public ProxyListener(@NonNull ParseListener parseListener) {
         this.parseListener = parseListener;

@@ -11,7 +11,7 @@ public class DecoderSpecificInfo implements CodecSpecificData {
     }
 
     @Override
-    public List<TypedConfig> getCodecSpecificData() {
+    public List<TypedConfig> getTypedConfigList() {
         return Collections.singletonList(typedConfig);
     }
 

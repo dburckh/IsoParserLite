@@ -102,18 +102,6 @@ public class CanonRaw3 implements BoxTypes {
         );
     }
 
-    public static void dump(File file) throws Exception {
-        System.out.println(PARSER.dump(file));
-    }
-
-    public static void main(String[] args) {
-        try {
-            dump(new File("./iso/src/test/resources/canon.cr3"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     public static CanonRaw3 parse(File file) throws IOException {
         return parse(IsoParser.getFileChannelReader(file));
     }

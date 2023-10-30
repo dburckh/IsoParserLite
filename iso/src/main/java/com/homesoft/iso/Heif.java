@@ -4,10 +4,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.homesoft.iso.reader.Av1DecoderConfigReader;
+import com.homesoft.iso.reader.ByteArrayReader;
 import com.homesoft.iso.reader.CodecSpecificData;
 import com.homesoft.iso.reader.BaseBoxContainer;
+import com.homesoft.iso.reader.Extent;
 import com.homesoft.iso.reader.ExtentReader;
 import com.homesoft.iso.reader.FileTypeReader;
+import com.homesoft.iso.reader.HevcDecoderConfig;
 import com.homesoft.iso.reader.HevcDecoderConfigReader;
 import com.homesoft.iso.reader.ImageSpatialExtents;
 import com.homesoft.iso.reader.ImageSpatialExtentsReader;
@@ -25,6 +28,7 @@ import com.homesoft.iso.reader.StringReader;
 import com.homesoft.iso.listener.CompositeListener;
 import com.homesoft.iso.listener.ListListener;
 import com.homesoft.iso.listener.AnnotationListener;
+import com.homesoft.iso.reader.TypedReader;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,9 +36,12 @@ import java.io.InvalidObjectException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Parser for HEIF based ISOBMFF files
@@ -62,8 +69,9 @@ public class Heif implements BoxTypes {
                                             .addParser(new ImageSpatialExtentsReader())
                                             .addParser(new HevcDecoderConfigReader())
                                             .addParser(new Av1DecoderConfigReader())
-                                            .addParser(TYPE_AUXC, new StringReader(true))
-                                            .addParser(BaseBoxContainer.TYPE_DEFAULT, new ExtentReader())
+                                            .addParser(TYPE_AUXC, new TypedReader(new StringReader(true)))
+                                            .addParser(TYPE_irot, new TypedReader(new ByteArrayReader(false)))
+                                            .addParser(BaseBoxContainer.TYPE_DEFAULT, new TypedReader(new ExtentReader()))
                                     )
                             )
                     )
@@ -167,8 +175,35 @@ public class Heif implements BoxTypes {
         return new Image(itemInfoEntry, properties, itemLocation);
     }
 
+    @NonNull
+    Item getItem(@NonNull final ItemInfoEntry itemInfoEntry) throws InvalidObjectException  {
+        final ItemLocation itemLocation = StreamUtil.findId(itemInfoEntry.id, itemLocations);
+        if (itemLocation == null) {
+            throw new InvalidObjectException("Item has no location");
+        }
+        final Object[] properties = getProperties(itemInfoEntry.id);
+        switch (itemInfoEntry.type) {
+            case ItemInfoEntry.ITEM_TYPE_grid:
+                return new Grid(itemInfoEntry, properties, itemLocation, getImageList(itemInfoEntry));
+            case ItemInfoEntry.ITEM_TYPE_hvc1:
+            case ItemInfoEntry.ITEM_TYPE_av01:
+                return new Image(itemInfoEntry, properties, itemLocation);
+            default:
+                return new Item(itemInfoEntry, properties, itemLocation);
+        }
+    }
+
     public int getPrimaryItemId() {
         return primaryItemId;
+    }
+
+    @NonNull
+    public Item getItem(int id) throws InvalidObjectException {
+        final ItemInfoEntry itemInfoEntry = StreamUtil.findId(id, itemInfoEntries);
+        if (itemInfoEntry == null) {
+            throw new InvalidObjectException("Item Not Found: id=" + id);
+        }
+        return getItem(itemInfoEntry);
     }
 
     @NonNull
@@ -177,29 +212,37 @@ public class Heif implements BoxTypes {
         if (itemInfoEntry == null) {
             throw new InvalidObjectException("Primary Item Info not found in ItemInfoEntries");
         }
-        final Item item;
-        switch (itemInfoEntry.type) {
-            case ItemInfoEntry.ITEM_TYPE_grid:
-                item = getGrid(itemInfoEntry);
-                break;
-            case ItemInfoEntry.ITEM_TYPE_hvc1:
-            case ItemInfoEntry.ITEM_TYPE_av01:
-                item = getImage(itemInfoEntry);
-                break;
-            default:
-                item = null;
-        }
-        if (item == null) {
-            throw new InvalidObjectException("Primary Item could not be created.");
-        }
-        return item;
+        return getItem(itemInfoEntry);
     }
 
-    private Grid getGrid(final ItemInfoEntry itemInfoEntry) {
-        final Object[] properties = getProperties(itemInfoEntry.id);
+    public List<SingleItemTypeReference> getReferenceList(int id) {
+        final ArrayList<SingleItemTypeReference> list = new ArrayList<>();
+        for (SingleItemTypeReference reference : itemReferences) {
+            if (Arrays.binarySearch(reference.getToIds(), id) >= 0) {
+                list.add(reference);
+            }
+        }
+        return list;
+    }
+
+    public List<Item> getReferencedItemList(int id) {
+        final List<SingleItemTypeReference> refList = getReferenceList(id);
+        final ArrayList<Item> list = new ArrayList<>(refList.size());
+
+        for (SingleItemTypeReference reference : refList) {
+            try {
+                list.add(getItem(reference.fromId));
+            } catch (InvalidObjectException e) {
+                Logger.getLogger(this.getClass().getName()).log(Level.WARNING, e.toString(), e);
+            }
+        }
+        return list;
+    }
+
+    private List<Image> getImageList(final ItemInfoEntry itemInfoEntry) {
         List<Image> imageList = Collections.emptyList();
         for (SingleItemTypeReference reference : itemReferences) {
-            if (reference.type == ItemReferenceReader.TYPE_DIMG && reference.fromId == itemInfoEntry.id) {
+            if (reference.type == SingleItemTypeReference.TYPE_dimg && reference.fromId == itemInfoEntry.id) {
                 final int[] imageIds = reference.getToIds();
                 imageList = new ArrayList<>(imageIds.length);
                 for (int imageId : imageIds) {
@@ -208,9 +251,10 @@ public class Heif implements BoxTypes {
                         imageList.add(image);
                     }
                 }
+                break;
             }
         }
-        return new Grid(itemInfoEntry, properties, imageList);
+        return imageList;
     }
 
     private static class Work {
@@ -228,18 +272,29 @@ public class Heif implements BoxTypes {
         ItemLocation[] itemLocations;
     }
 
-    public static class Item implements Type {
+    public static class Item implements Type, Id {
         final ItemInfoEntry itemInfoEntry;
         final Object[] properties;
 
-        Item(ItemInfoEntry itemInfoEntry, Object[] properties) {
+        final ItemLocation itemLocation;
+
+        Item(@NonNull ItemInfoEntry itemInfoEntry, @NonNull Object[] properties, ItemLocation itemLocation) {
             this.itemInfoEntry = itemInfoEntry;
             this.properties = properties;
+            this.itemLocation = itemLocation;
+        }
+
+        public int getId() {
+            return itemInfoEntry.id;
         }
 
         @Override
         public int getType() {
             return itemInfoEntry.type;
+        }
+
+        public ItemInfoEntry getItemInfoEntry() {
+            return itemInfoEntry;
         }
 
         public Type getProperty(int type) {
@@ -257,6 +312,49 @@ public class Heif implements BoxTypes {
                 return null;
             }
         }
+
+        public ItemLocation getItemLocation() {
+            return itemLocation;
+        }
+
+        /**
+         * Return the image rotation in degrees
+         * Only works for Image and Grids which have irot property
+         * @return null if not set or not [0-3]
+         */
+        public Integer getRotation() {
+            Type type = getProperty(BoxTypes.TYPE_irot);
+            if (type instanceof TypedResult) {
+                TypedResult typedResult = (TypedResult) type;
+                if (typedResult.result instanceof byte[]) {
+                    byte[] rotArray = (byte[]) typedResult.result;
+                    switch ((int)rotArray[0]) {
+                        case 0:
+                            return 0;
+                        case 1:
+                            return 270;
+                        case 2:
+                            return 180;
+                        case 3:
+                            return 90;
+                    }
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof Item) {
+                return itemInfoEntry.equals(((Item) obj).itemInfoEntry);
+            }
+            return super.equals(obj);
+        }
+
+        @Override
+        public int hashCode() {
+            return itemInfoEntry.hashCode();
+        }
     }
 
     /**
@@ -266,8 +364,9 @@ public class Heif implements BoxTypes {
     public static class Grid extends Item {
         private final List<Image> imageList;
 
-        Grid(ItemInfoEntry itemInfoEntry, Object[] properties, List<Image> imageList) {
-            super(itemInfoEntry, properties);
+        Grid(ItemInfoEntry itemInfoEntry, Object[] properties, ItemLocation itemLocation,
+             List<Image> imageList) {
+            super(itemInfoEntry, properties, itemLocation);
             this.imageList = imageList;
         }
 
@@ -281,12 +380,9 @@ public class Heif implements BoxTypes {
      * This maybe a subImage contained in a {@link Grid} or standalone Image
      */
     public static class Image extends Item {
-        private final ItemLocation itemLocation;
-
         Image(@NonNull ItemInfoEntry itemInfoEntry, @NonNull Object[] properties,
               @NonNull ItemLocation itemLocation) {
-            super(itemInfoEntry, properties);
-            this.itemLocation = itemLocation;
+            super(itemInfoEntry, properties, itemLocation);
         }
 
         /**
@@ -294,6 +390,47 @@ public class Heif implements BoxTypes {
          */
         public CodecSpecificData getCodecSpecificData() {
             return StreamUtil.findClass(CodecSpecificData.class, properties);
+        }
+
+        /**
+         * Get the Android CSD0 value
+         * @return null if type is unknown
+         */
+        @Nullable
+        public ByteBuffer getCSD0() {
+            CodecSpecificData codecSpecificData = getCodecSpecificData();
+            List<CodecSpecificData.TypedConfig> csdList = codecSpecificData.getTypedConfigList();
+            if (csdList.isEmpty()) {
+                throw new IllegalArgumentException("CodeSpecificData empty");
+            }
+            final ByteBuffer csd0;
+            if (getType() == ItemInfoEntry.ITEM_TYPE_hvc1) {
+                final ByteBuffer vps = CodecSpecificData.TypedConfig.findType(HevcDecoderConfig.TYPE_VPS, csdList);
+                if (vps == null) throw new IllegalArgumentException("VPS Required");
+                int vpsSize = vps.capacity();
+                final ByteBuffer sps = CodecSpecificData.TypedConfig.findType(HevcDecoderConfig.TYPE_SPS, csdList);
+                if (sps == null) throw new IllegalArgumentException("SPS Required");
+                int spsSize = sps.capacity();
+                final ByteBuffer pps = CodecSpecificData.TypedConfig.findType(HevcDecoderConfig.TYPE_PPS, csdList);
+                if (pps == null) throw new IllegalArgumentException("PPS Required");
+                final int ppsSize = pps.capacity();
+                csd0 = ByteBuffer.allocateDirect(vpsSize + spsSize + ppsSize + 12);
+                csd0.putInt(1);
+                csd0.put(vps);
+                csd0.putInt(1);
+                csd0.put(sps);
+                csd0.putInt(1);
+                csd0.put(pps);
+                csd0.clear();
+            } else if (getType() == ItemInfoEntry.ITEM_TYPE_av01) {
+                // Codec tries to access bytes directly, which blows up on RO ByteBuffer
+                ByteBuffer csd0ro = csdList.get(0).byteBuffer;
+                csd0 = ByteBuffer.allocateDirect(csd0ro.capacity());
+                csd0.put(csd0ro);
+            } else {
+                return null;
+            }
+            return csd0;
         }
 
         /**
@@ -320,16 +457,15 @@ public class Heif implements BoxTypes {
          */
         public int readExtent(final int id, @NonNull RandomStreamReader streamReader,
                                   @NonNull ByteBuffer byteBuffer) throws IOException {
-            final long extentBytes = itemLocation.getExtentLength(id);
-            if (extentBytes > byteBuffer.remaining()) {
+            Extent extent = itemLocation.getExtent(id);
+            if (extent.size > byteBuffer.remaining()) {
                 throw new BufferOverflowException();
             }
-            final long position = itemLocation.getExtentOffset(id);
             final int inLimit = byteBuffer.limit();
             final int bytes;
             try {
-                byteBuffer.limit(byteBuffer.position() + (int)extentBytes);
-                bytes = streamReader.read(byteBuffer, position);
+                byteBuffer.limit(byteBuffer.position() + extent.size);
+                bytes = streamReader.read(byteBuffer, extent.offset);
             } finally {
                 byteBuffer.limit(inLimit);
             }

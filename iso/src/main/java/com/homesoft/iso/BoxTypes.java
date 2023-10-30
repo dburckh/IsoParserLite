@@ -117,6 +117,10 @@ public interface BoxTypes {
     int TYPE_hvcC = 0x68766343; // meta->irpr->ipco->hvcC - HEVC Codec Config
     int TYPE_av1C = 0x61763143; // meta->irpr->ipco->av1C - AV1 Codec Config
     int TYPE_ispe = 0x69737065; // meta->irpr->ipco->ispe - Image Spacial Extents (dimensions)
+    /**
+     * 90 specifies the angle of anti-clockwise rotation in degrees.
+     */
+    int TYPE_irot = 0x69726F74; // meta->irpr->ipco->irot - Image Rotation
 
     int TYPE_Axyz = 0xA978797A; // udta->@xyz or udta->meta->ilst->@xyz
 

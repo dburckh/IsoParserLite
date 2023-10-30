@@ -17,7 +17,7 @@ public class HeifTest {
         return new File("src/test/resources/ld.heic");
     }
     File getAvifFile() {
-        return new File("src/test/resources/ld.avif");
+        return new File("src/test/resources/ld_90.avif");
     }
 
     @Test
@@ -37,7 +37,7 @@ public class HeifTest {
         Assert.assertEquals(512, imageIse.width);
         Assert.assertEquals(512, imageIse.height);
         HevcDecoderConfig hvcC = (HevcDecoderConfig)image.getProperty(Heif.TYPE_hvcC);
-        Assert.assertEquals(3, hvcC.getCodecSpecificData().size());
+        Assert.assertEquals(3, hvcC.getTypedConfigList().size());
     }
 
     @Test
@@ -49,14 +49,20 @@ public class HeifTest {
         ImageSpatialExtents gridIse = grid.getImageSpatialExtents();
         Assert.assertEquals(3072, gridIse.width);
         Assert.assertEquals(4080, gridIse.height);
+        Assert.assertEquals(Integer.valueOf(90), grid.getRotation());
+        Assert.assertEquals(avif.getPrimaryItemId(), grid.getId());
 
         List<Heif.Image> imageList = grid.getImageList();
         Assert.assertEquals(48, imageList.size());
         Heif.Image image = imageList.get(0);
+        List<Heif.Item> itemList = avif.getReferencedItemList(image.getId());
+        Assert.assertEquals(1, itemList.size());
+        Assert.assertEquals(grid, itemList.get(0));
         ImageSpatialExtents imageIse = image.getImageSpatialExtents();
         Assert.assertEquals(512, imageIse.width);
         Assert.assertEquals(512, imageIse.height);
         Av1DecoderConfig imageAv1c = (Av1DecoderConfig)image.getProperty(Heif.TYPE_av1C);
-        Assert.assertEquals(1, imageAv1c.getCodecSpecificData().size());
+        Assert.assertEquals(1, imageAv1c.getTypedConfigList().size());
+
     }
 }

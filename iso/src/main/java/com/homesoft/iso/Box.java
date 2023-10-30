@@ -48,10 +48,6 @@ public class Box {
         }
     }
 
-    public static int readVersionFlags(StreamReader streamReader) throws IOException {
-        return streamReader.getInt();
-    }
-
     public Box(Number size, int type) {
         this.size = size;
         this.type = type;

@@ -1,13 +1,11 @@
 package com.homesoft.iso.reader;
 
-import com.homesoft.iso.BoxTypes;
 import com.homesoft.iso.StreamUtil;
-import com.homesoft.iso.Type;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
-public class UUIDResult implements Type {
+public class UUIDResult {
     private final ByteBuffer uuid;
 
     public final Object result;
@@ -20,11 +18,6 @@ public class UUIDResult implements Type {
 
     public ByteBuffer getUuid() {
         return uuid.duplicate();
-    }
-
-    @Override
-    public int getType() {
-        return BoxTypes.TYPE_uuid;
     }
 
     @Override

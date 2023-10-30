@@ -19,7 +19,7 @@ public class Av1DecoderConfig implements CodecSpecificData, Type {
     }
 
     @Override
-    public List<TypedConfig> getCodecSpecificData() {
+    public List<TypedConfig> getTypedConfigList() {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(bytes.length - 4);
         byteBuffer.put(bytes, 4, byteBuffer.capacity());
         return Collections.singletonList(new TypedConfig(TYPE_NA, byteBuffer.asReadOnlyBuffer()));

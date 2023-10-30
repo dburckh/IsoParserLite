@@ -31,7 +31,7 @@ class ImageDecoder(image: Image):AutoCloseable, VideoDecoder.DataSource,
     private var processing = 0
     init {
         val codecSpecificData = image.codecSpecificData
-        val csdList = codecSpecificData.codecSpecificData
+        val csdList = codecSpecificData.typedConfigList
         if (csdList.isEmpty()) {
             throw IllegalArgumentException("CodeSpecificData empty")
         }

@@ -18,7 +18,7 @@ public interface CodecSpecificData {
      * Ordered List of {@link TypedConfig} order is determined by the instance.
      * There may be multiples of the same {@link TypedConfig#type}, but it's unlikely.
      */
-    List<TypedConfig> getCodecSpecificData();
+    List<TypedConfig> getTypedConfigList();
 
     class TypedConfig {
         /**
@@ -38,7 +38,7 @@ public interface CodecSpecificData {
         /**
          * Find the first instance of a given type
          * @param type {@link TypedConfig#type} to seek
-         * @param list List from {@link CodecSpecificData#getCodecSpecificData()}
+         * @param list List from {@link CodecSpecificData#getTypedConfigList()}
          * @return the first {@link TypedConfig#byteBuffer} of the given type
          */
         @Nullable
