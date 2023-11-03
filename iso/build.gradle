@@ -1,10 +1,21 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
 }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+}
+group = 'com.homesoft'
+version = '1.0.0'
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            artifactId = 'isoparserlite'
+        }
+    }
 }
 dependencies {
 
