@@ -12,6 +12,4 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "Heif"
-include ':app'
 include ':iso'
