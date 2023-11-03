@@ -9,7 +9,7 @@ public class IntBufferArray implements IntArray, LongArray {
     private final IntBuffer intBuffer;
 
     public IntBufferArray(ByteBuffer byteBuffer) {
-        intBuffer = byteBuffer.clear().asIntBuffer();;
+        intBuffer = ((ByteBuffer)byteBuffer.clear()).asIntBuffer();
     }
 
     @Override

@@ -7,7 +7,7 @@ public class LongBufferArray implements LongArray {
     private final LongBuffer longBuffer;
 
     public LongBufferArray(ByteBuffer byteBuffer) {
-        this.longBuffer = byteBuffer.clear().asLongBuffer();
+        this.longBuffer = ((ByteBuffer)byteBuffer.clear()).asLongBuffer();
     }
 
     @Override
