@@ -84,6 +84,7 @@ public class Heif implements BoxTypes {
     public static Heif parse(StreamReader streamReader) throws IOException {
         final Work work = new Work();
         final AnnotationListener annotationListener = new AnnotationListener(work);
+        annotationListener.setPoisonType(BoxTypes.TYPE_meta);
         final CompositeListener compositeListener = new CompositeListener(annotationListener);
         compositeListener.add(new ListListener(annotationListener, TYPE_iinf, TYPE_iinf_list), TYPE_iinf);
         compositeListener.add(new ListListener(annotationListener, TYPE_ipco, TYPE_ipco_list), TYPE_ipco);

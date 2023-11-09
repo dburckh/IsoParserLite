@@ -3,6 +3,7 @@ package com.homesoft.iso.listener;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.homesoft.iso.BoxTypes;
 import com.homesoft.iso.ClassResult;
 import com.homesoft.iso.ParseListener;
 import com.homesoft.iso.TypeResult;
@@ -24,6 +25,9 @@ public class AnnotationListener implements ParseListener {
 
     final private HashMap<Integer, AnnotationInfo> typeMap = new HashMap<>();
     final private HashMap<Class<?>, AnnotationInfo> classMap = new HashMap<>();
+
+    private boolean cancelled;
+    private int poisonType = BoxTypes.TYPE_NA;
 
     private static ArrayList<AnnotationInfo> getAnnotationInfoList(@NonNull final Object object) {
         final ArrayList<AnnotationInfo> list = new ArrayList<>();
@@ -105,6 +109,15 @@ public class AnnotationListener implements ParseListener {
         return removeObject(typeMap.values(), object) | removeObject(classMap.values(), object);
     }
 
+    /**
+     * When {@link ParseListener#onContainerEnd(int)} is called with this type
+     * isCancelled() will return true
+     * @param type type to kill the parse
+     */
+    public void setPoisonType(int type) {
+        poisonType = type;
+    }
+
     @Override
     public void onContainerStart(int type) {
         //Intentionally blank
@@ -117,12 +130,14 @@ public class AnnotationListener implements ParseListener {
 
     @Override
     public void onContainerEnd(int type) {
-        //Intentionally blank
+        if (type == poisonType) {
+            cancelled = true;
+        }
     }
 
     @Override
     public boolean isCancelled() {
-        return false;
+        return cancelled;
     }
 
     public void onResult(int type, @Nullable Object result) {

@@ -155,6 +155,7 @@ public class Movie implements BoxTypes {
 
     public static Movie parse(StreamReader streamReader) throws IOException {
         final AnnotationListener annotationListener = new AnnotationListener();
+        annotationListener.setPoisonType(BoxTypes.TYPE_moov);
         final CompositeListener compositeListener = new CompositeListener(annotationListener);
         final Work work = new Work(annotationListener);
         annotationListener.add(work);

@@ -1,6 +1,8 @@
 package com.homesoft.iso.heif;
 
+import com.homesoft.iso.FileChannelReader;
 import com.homesoft.iso.Heif;
+import com.homesoft.iso.IsoParser;
 import com.homesoft.iso.reader.Av1DecoderConfig;
 import com.homesoft.iso.reader.HevcDecoderConfig;
 import com.homesoft.iso.reader.ImageSpatialExtents;
@@ -22,7 +24,8 @@ public class HeifTest {
 
     @Test
     public void parseHeic() throws IOException  {
-        Heif heic = Heif.parse(getHeicFile());
+        FileChannelReader reader = IsoParser.getFileChannelReader(getHeicFile());
+        Heif heic = Heif.parse(reader);
         Heif.Item item = heic.getPrimaryItem();
 
         Heif.Grid grid = (Heif.Grid)item;
@@ -38,11 +41,15 @@ public class HeifTest {
         Assert.assertEquals(512, imageIse.height);
         HevcDecoderConfig hvcC = (HevcDecoderConfig)image.getProperty(Heif.TYPE_hvcC);
         Assert.assertEquals(3, hvcC.getTypedConfigList().size());
+
+        // This test file cannot be short circuited, so the reader should be at the end
+        Assert.assertEquals(reader.size(), reader.position());
     }
 
     @Test
     public void parseAvif() throws IOException  {
-        Heif avif = Heif.parse(getAvifFile());
+        FileChannelReader reader = IsoParser.getFileChannelReader(getAvifFile());
+        Heif avif = Heif.parse(reader);
         Heif.Item item = avif.getPrimaryItem();
 
         Heif.Grid grid = (Heif.Grid)item;
@@ -64,5 +71,7 @@ public class HeifTest {
         Av1DecoderConfig imageAv1c = (Av1DecoderConfig)image.getProperty(Heif.TYPE_av1C);
         Assert.assertEquals(1, imageAv1c.getTypedConfigList().size());
 
+        // This test file can be short circuited, so the reader should NOT be at the end
+        Assert.assertNotEquals(reader.size(), reader.position());
     }
 }
