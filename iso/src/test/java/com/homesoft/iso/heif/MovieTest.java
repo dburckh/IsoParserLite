@@ -5,6 +5,7 @@ import com.homesoft.iso.IsoParser;
 import com.homesoft.iso.Movie;
 import com.homesoft.iso.reader.AudioSampleEntry;
 import com.homesoft.iso.reader.DecoderConfigDescriptor;
+import com.homesoft.iso.reader.TrackHeader;
 import com.homesoft.iso.reader.VisualSampleEntry;
 import com.homesoft.iso.listener.TrackListener;
 
@@ -82,6 +83,9 @@ public class MovieTest {
         VisualSampleEntry visualSampleEntry = videoTrack.getVisualSampleEntry();
         Assert.assertEquals(1080, visualSampleEntry.getWidth());
         Assert.assertEquals(1920, visualSampleEntry.getHeight());
+
+        TrackHeader.Matrix matrix = videoTrack.getMatrix();
+        Assert.assertEquals(90.0, matrix.getRotation(), 0.1);
 
         Assert.assertNotNull(movie.getGpsCoordinates());
 

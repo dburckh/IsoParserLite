@@ -204,6 +204,11 @@ public class TrackListener extends ProxyListener implements Type {
             return null;
         }
 
+        @NonNull
+        public TrackHeader.Matrix getMatrix() {
+            return trackHeader.matrix;
+        }
+
         @Nullable
         public PixelAspectRatio getPixelAspectRatio() {
             return pixelAspectRatio;

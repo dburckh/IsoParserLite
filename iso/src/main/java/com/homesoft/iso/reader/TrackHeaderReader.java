@@ -18,8 +18,7 @@ public class TrackHeaderReader implements TypedParser, DependantBoxReader {
         2 + // layer
         2 + // alternateGroup
         2 + // volume
-        2 + // reserved
-        9 * 4; // matrix
+        2; // reserved
 
     private MovieHeaderReader movieHeaderReader;
 
@@ -51,11 +50,13 @@ public class TrackHeaderReader implements TypedParser, DependantBoxReader {
             return null;
         }
         byteBuffer.position(byteBuffer.position() + SKIP);
+        byte[] matrixBytes = new byte[9 * 4];
+        byteBuffer.get(matrixBytes);
         final float width = Movie.toFloat(byteBuffer.getInt());
         final float height = Movie.toFloat(byteBuffer.getInt());
         Header movieHeader = (Header) dependency;
         return new TrackHeader(creationTime, modificationTime, movieHeader.getTimescale(),
-                duration, trackId, width, height);
+                duration, trackId, matrixBytes, width, height);
     }
 
     @Override
